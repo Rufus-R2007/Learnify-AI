@@ -239,6 +239,26 @@ class PathForgeService:
             execution_type=ExecutionType.ASSEMBLY,
         ))
 
+        planned_journey = [
+            {
+                "topic_id": item.topic_id,
+                "name": item.name,
+                "description": item.description,
+                "unit": item.unit,
+                "category": item.category,
+                "estimated_hours": item.estimated_hours,
+                "direct_prerequisites": item.prerequisites,
+                "reason_included": item.reason,
+                "step_number": idx + 1,
+                "status": "completed" if item.is_completed else "pending",
+            }
+            for idx, item in enumerate(plan.ordered_plan)
+        ]
+
+        all_prereqs = [pid for pid in plan.all_required_ids if pid != goal_topic_id]
+        already_mastered = [cid for cid in plan.completed_topics if cid != goal_topic_id]
+        remaining_prereqs = [item.topic_id for item in plan.ordered_plan if not item.is_completed and item.topic_id != goal_topic_id]
+
         return {
             "success": True,
             "goal": {
@@ -252,6 +272,21 @@ class PathForgeService:
             "plan": plan.to_dict(),
             "route_search": search_result_dict,
             "trace": [s.model_dump() for s in traces],
+            # Top-level flattened properties matching frontend LearningPlanResponse:
+            "goal_topic_id": goal_node.id,
+            "goal_topic_name": goal_node.name,
+            "start_topic_id": effective_start,
+            "start_topic_name": graph.get_node(effective_start).name if effective_start and graph.has_node(effective_start) else None,
+            "algorithm_used": algo_choice if effective_start and graph.has_node(effective_start) else (algorithm or "topological"),
+            "shortest_path_nodes": search_result_dict.get("path", []) if search_result_dict else [],
+            "shortest_path_edges": search_result_dict.get("edge_count", 0) if search_result_dict else 0,
+            "shortest_path_reachable": search_result_dict.get("reachable", True) if search_result_dict else True,
+            "all_prerequisites": all_prereqs,
+            "already_mastered": already_mastered,
+            "remaining_prerequisites": remaining_prereqs,
+            "planned_journey": planned_journey,
+            "total_estimated_hours": plan.total_estimated_hours,
+            "warnings": plan.warnings,
         }
 
     def compare_algorithms(
@@ -357,11 +392,29 @@ class PathForgeService:
             f"DFS explored prerequisite chains deeply ({dfs_res.explored_count} nodes)."
         )
 
+        # Transform comparisons into results matching frontend AlgorithmComparisonItem
+        results = [
+            {
+                "algorithm": c["algorithm"],
+                "path_found": c["reachable"],
+                "path": c["path"],
+                "edge_count": c["edge_count"],
+                "nodes_explored_count": c["nodes_explored"],
+                "explored_order": c.get("visited_sample", []),
+                "duration_ms": c["duration_ms"],
+                "optimality_note": c["optimality"],
+            }
+            for c in comparisons
+        ]
+
         return {
             "success": True,
             "start": {"id": start_topic_id, "name": start_name},
             "goal": {"id": goal_topic_id, "name": goal_name},
+            "start_topic": start_name,
+            "target_topic": goal_name,
             "comparisons": comparisons,
+            "results": results,
             "explanation": explanation,
         }
 
@@ -447,9 +500,16 @@ class PathForgeService:
             execution_type=ExecutionType.GOAL_BASED,
         ))
 
+        schedule_dict = schedule_res.to_dict()
+        explanation = (
+            f"Successfully scheduled {len(schedule_res.sessions)} study sessions across available days."
+            if schedule_res.is_feasible
+            else f"Cannot schedule required {schedule_res.total_study_hours}h study time within available capacity of {schedule_res.available_capacity_hours}h. Reason: {schedule_res.failure_reason or 'Capacity exceeded'}."
+        )
+
         return {
             "success": True,
-            "schedule_result": schedule_res.to_dict(),
+            "schedule_result": schedule_dict,
             "preferences": {
                 "available_days": prefs.available_days,
                 "max_daily_hours": prefs.get_effective_max_hours(),
@@ -457,6 +517,17 @@ class PathForgeService:
                 "planning_weeks": prefs.planning_weeks,
             },
             "trace": [s.model_dump() for s in traces],
+            # Top-level flattened properties matching frontend StudyScheduleResponse:
+            "is_feasible": schedule_res.is_feasible,
+            "sessions": schedule_dict["sessions"],
+            "total_hours_scheduled": schedule_res.used_capacity_hours,
+            "total_hours_required": schedule_res.total_study_hours,
+            "available_capacity_hours": schedule_res.available_capacity_hours,
+            "backtrack_count": schedule_res.backtrack_count,
+            "assignments_tried": schedule_res.assignments_tried,
+            "duration_ms": schedule_res.duration_ms,
+            "constraint_violations": schedule_res.constraint_explanations if not schedule_res.is_feasible else [],
+            "explanation": explanation,
         }
 
 

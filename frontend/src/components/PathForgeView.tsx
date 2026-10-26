@@ -63,7 +63,7 @@ export const PathForgeView: React.FC<PathForgeViewProps> = ({
   );
   const [selectedStartId, setSelectedStartId] = useState<string>('topic-python-basics');
   const [knownTopicIds, setKnownTopicIds] = useState<string[]>([
-    'topic-programming-fundamentals',
+    'topic-prog-fund',
     'topic-python-basics'
   ]);
   const [selectedAlgo, setSelectedAlgo] = useState<string>('bfs');
@@ -80,7 +80,7 @@ export const PathForgeView: React.FC<PathForgeViewProps> = ({
   const dragStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   // Algorithm Explorer state
-  const [compareStartId, setCompareStartId] = useState<string>('topic-programming-fundamentals');
+  const [compareStartId, setCompareStartId] = useState<string>('topic-prog-fund');
   const [compareGoalId, setCompareGoalId] = useState<string>('topic-machine-learning');
   const [isComparing, setIsComparing] = useState<boolean>(false);
   const [compareResults, setCompareResults] = useState<CompareAlgorithmsResponse | null>(null);
@@ -121,7 +121,7 @@ export const PathForgeView: React.FC<PathForgeViewProps> = ({
         setSelectedGoalId(defaultGoal);
         const planRes = await planLearningPath(
           defaultGoal,
-          ['topic-programming-fundamentals', 'topic-python-basics'],
+          ['topic-prog-fund', 'topic-python-basics'],
           'topic-python-basics',
           'bfs'
         );
@@ -165,7 +165,7 @@ export const PathForgeView: React.FC<PathForgeViewProps> = ({
         const syntheticMessage: Message = {
           id: `pathforge-${Date.now()}`,
           role: 'assistant',
-          content: `PathForge planned a complete learning journey for **${res.goal_topic_name}** using ${res.algorithm_used.toUpperCase()}. Requires ${res.remaining_prerequisites.length} remaining topics (${res.total_estimated_hours} estimated hours).`,
+          content: `PathForge planned a complete learning journey for **${res.goal_topic_name}** using ${(res.algorithm_used || 'topological').toUpperCase()}. Requires ${res.remaining_prerequisites?.length || 0} remaining topics (${res.total_estimated_hours || 0} estimated hours).`,
           timestamp: new Date(),
           conceptsUsed: [
             res.algorithm_used.toUpperCase(),
@@ -642,28 +642,28 @@ export const PathForgeView: React.FC<PathForgeViewProps> = ({
                           <div className="flex items-center space-x-1.5">
                             <span className="text-slate-400">Total in Path:</span>
                             <span className="font-bold text-slate-900 font-mono">
-                              {currentPlan.all_prerequisites.length + 1}
+                              {(currentPlan.all_prerequisites?.length ?? 0) + 1}
                             </span>
                           </div>
                           <span className="text-slate-300">•</span>
                           <div className="flex items-center space-x-1.5">
                             <span className="text-slate-400">Mastered:</span>
                             <span className="font-bold text-emerald-600 font-mono">
-                              {currentPlan.already_mastered.length}
+                              {currentPlan.already_mastered?.length ?? 0}
                             </span>
                           </div>
                           <span className="text-slate-300">•</span>
                           <div className="flex items-center space-x-1.5">
                             <span className="text-slate-400">To Study:</span>
                             <span className="font-bold text-indigo-600 font-mono">
-                              {currentPlan.remaining_prerequisites.length}
+                              {currentPlan.remaining_prerequisites?.length ?? 0}
                             </span>
                           </div>
                           <span className="text-slate-300">•</span>
                           <div className="flex items-center space-x-1.5">
                             <Clock className="w-3.5 h-3.5 text-slate-400" />
                             <span className="font-bold text-slate-900 font-mono">
-                              {currentPlan.total_estimated_hours} hrs
+                              {currentPlan.total_estimated_hours ?? 0} hrs
                             </span>
                           </div>
                         </div>
@@ -843,9 +843,9 @@ export const PathForgeView: React.FC<PathForgeViewProps> = ({
                                 currentPlan.shortest_path_nodes.indexOf(edge.source) + 1;
 
                             const isPrereqEdge =
-                              currentPlan?.all_prerequisites.includes(edge.source) &&
+                              Boolean(currentPlan?.all_prerequisites?.includes(edge.source) &&
                               (currentPlan.all_prerequisites.includes(edge.target) ||
-                                edge.target === selectedGoalId);
+                                edge.target === selectedGoalId));
 
                             // Smooth curved bezier line
                             const dx = tgtPos.x - srcPos.x;
@@ -1052,7 +1052,7 @@ export const PathForgeView: React.FC<PathForgeViewProps> = ({
                     <div className="flex-1 overflow-y-auto p-6 space-y-3">
                       <div className="flex items-center justify-between mb-2">
                         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                          Topological Prerequisite Learning Journey ({currentPlan?.planned_journey.length || 0} Stages)
+                          Topological Prerequisite Learning Journey ({currentPlan?.planned_journey?.length || 0} Stages)
                         </h3>
                         <span className="text-xs text-slate-400">
                           Topologically sorted dependency order
@@ -1229,7 +1229,7 @@ export const PathForgeView: React.FC<PathForgeViewProps> = ({
                 {compareResults ? (
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                      {compareResults.results.map((res, i) => (
+                      {compareResults.results?.map((res, i) => (
                         <div
                           key={i}
                           className="bg-white rounded-2xl border border-slate-200 shadow-xs p-5 flex flex-col justify-between space-y-3"
@@ -1535,14 +1535,14 @@ export const PathForgeView: React.FC<PathForgeViewProps> = ({
                     </div>
 
                     {/* Scheduled Timetable Sessions */}
-                    {scheduleResult.is_feasible && scheduleResult.sessions.length > 0 && (
+                    {scheduleResult.is_feasible && (scheduleResult.sessions?.length || 0) > 0 && (
                       <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-3">
                         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                          Assigned Study Sessions ({scheduleResult.sessions.length} sessions)
+                          Assigned Study Sessions ({scheduleResult.sessions?.length || 0} sessions)
                         </h3>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                          {scheduleResult.sessions.map((session, idx) => (
+                          {scheduleResult.sessions?.map((session, idx) => (
                             <div
                               key={idx}
                               className="p-3.5 bg-slate-50 rounded-xl border border-slate-200/80 hover:bg-white hover:shadow-xs transition-all space-y-1.5"
