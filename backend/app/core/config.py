@@ -2,7 +2,7 @@
 Configuration settings for Learnify AI
 """
 
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import List
 
 
@@ -19,15 +19,18 @@ class Settings(BaseSettings):
         "http://localhost:5173",
         "http://127.0.0.1:3000",
         "http://127.0.0.1:5173",
+        "http://localhost:8000",
     ]
     
-    # AI Model Settings (placeholder for future implementation)
+    # AI Model Settings
     MAX_CONTEXT_LENGTH: int = 10
     DEFAULT_CONFIDENCE_THRESHOLD: float = 0.7
-    
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=True,
+        extra="ignore"
+    )
 
 
 settings = Settings()

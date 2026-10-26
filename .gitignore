@@ -68,6 +68,10 @@ Desktop.ini
 
 # Project specific
 backend/*.db
+backend/*.db-journal
+backend/*.db-wal
+backend/*.db-shm
 backend/*.sqlite
 backend/data/
 frontend/build/
+frontend/dist/

@@ -4,40 +4,76 @@
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: rgba(226, 232, 240, 0.8);
   }
-  body {
-    @apply bg-gray-50 text-gray-900;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-      sans-serif;
+  
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background-color: #f8fafc;
+    color: #0f172a;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 }
 
-@layer components {
-  .chat-message {
-    @apply p-4 rounded-lg mb-3 max-w-[80%] break-words;
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Animation utilities */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
   }
-  
-  .chat-message.user {
-    @apply bg-primary-600 text-white ml-auto;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
-  
-  .chat-message.assistant {
-    @apply bg-white border border-gray-200 mr-auto;
+}
+
+@keyframes pulseSubtle {
+  0%, 100% {
+    opacity: 1;
   }
-  
-  .input-field {
-    @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
+  50% {
+    opacity: 0.7;
   }
-  
-  .btn-primary {
-    @apply bg-primary-600 hover:bg-primary-700 text-white font-medium px-6 py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
-  }
-  
-  .btn-secondary {
-    @apply bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium px-4 py-2 rounded-lg transition-colors;
-  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.25s ease-out forwards;
+}
+
+.animate-pulse-subtle {
+  animation: pulseSubtle 2s infinite ease-in-out;
+}
+
+/* Glass & Card styles */
+.panel-card {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.03);
+}
+
+.prooflens-gradient {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
 }
