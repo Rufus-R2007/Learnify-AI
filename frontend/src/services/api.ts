@@ -12,6 +12,12 @@ import {
   LearningPlanResponse,
   CompareAlgorithmsResponse,
   StudyScheduleResponse,
+  WhatIfPolicy,
+  EvaluateWhatIfResponse,
+  CompareWhatIfResponse,
+  GoalProofResponse,
+  ConsistencyCheckResponse,
+  DeclarativeRule,
 } from '../types';
 
 // Create axios instance with base configuration
@@ -235,6 +241,132 @@ export const generateStudySchedule = async (params: {
       throw new Error(error.response.data.detail);
     }
     throw new Error('Failed to generate study schedule');
+  }
+};
+
+/**
+ * =========================================================================
+ * WHATIF LAB & SYMBOLIC REASONING (PHASE 3) API CLIENT METHODS
+ * Developer: URK25CS1034 — Hiran Antony
+ * =========================================================================
+ */
+
+/**
+ * Fetch all policies configured with baseline presets for WhatIf Lab.
+ */
+export const getWhatIfPolicies = async (): Promise<{ total: number; policies: WhatIfPolicy[] }> => {
+  try {
+    const response = await api.get<{ total: number; policies: WhatIfPolicy[] }>('/api/whatif/policies');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching WhatIf policies:', error);
+    throw error;
+  }
+};
+
+/**
+ * Evaluate an interactive scenario against a declarative policy using forward chaining.
+ */
+export const evaluateWhatIfScenario = async (
+  policyId: string,
+  scenarioFacts: Record<string, any>,
+  entityId: string = 'student_01'
+): Promise<EvaluateWhatIfResponse> => {
+  try {
+    const response = await api.post<EvaluateWhatIfResponse>('/api/whatif/evaluate', {
+      policy_id: policyId,
+      scenario_facts: scenarioFacts,
+      entity_id: entityId,
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.data?.detail) {
+      throw new Error(error.response.data.detail);
+    }
+    throw new Error('Failed to evaluate WhatIf scenario');
+  }
+};
+
+/**
+ * Compare baseline and modified scenarios and compute exact counterfactual differences.
+ */
+export const compareWhatIfScenarios = async (
+  policyId: string,
+  baselineFacts: Record<string, any>,
+  modifiedFacts: Record<string, any>,
+  entityId: string = 'student_01'
+): Promise<CompareWhatIfResponse> => {
+  try {
+    const response = await api.post<CompareWhatIfResponse>('/api/whatif/compare', {
+      policy_id: policyId,
+      baseline_facts: baselineFacts,
+      modified_facts: modifiedFacts,
+      entity_id: entityId,
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.data?.detail) {
+      throw new Error(error.response.data.detail);
+    }
+    throw new Error('Failed to compare WhatIf scenarios');
+  }
+};
+
+/**
+ * Prove or diagnose a target goal using Backward Chaining and SLD-Resolution.
+ */
+export const proveReasoningGoal = async (
+  policyId: string,
+  goalPredicate: string,
+  desiredValue: any = true,
+  entityId: string = 'student_01',
+  scenarioFacts?: Record<string, any>
+): Promise<GoalProofResponse> => {
+  try {
+    const response = await api.post<GoalProofResponse>('/api/reasoning/prove', {
+      policy_id: policyId,
+      goal: goalPredicate,
+      desired_value: desiredValue,
+      entity_id: entityId,
+      scenario_facts: scenarioFacts,
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.data?.detail) {
+      throw new Error(error.response.data.detail);
+    }
+    throw new Error('Failed to diagnose goal via backward chaining');
+  }
+};
+
+/**
+ * Validate policy consistency using Propositional Resolution.
+ */
+export const checkPolicyConsistency = async (policyId: string): Promise<ConsistencyCheckResponse> => {
+  try {
+    const response = await api.post<ConsistencyCheckResponse>('/api/reasoning/consistency', {
+      policy_id: policyId,
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.data?.detail) {
+      throw new Error(error.response.data.detail);
+    }
+    throw new Error('Failed to check policy consistency');
+  }
+};
+
+/**
+ * Retrieve all declarative rules for a policy.
+ */
+export const getReasoningRules = async (policyId?: string): Promise<{ total: number; rules: DeclarativeRule[] }> => {
+  try {
+    const params = policyId ? { policy_id: policyId } : {};
+    const response = await api.get<{ total: number; rules: DeclarativeRule[] }>('/api/reasoning/rules', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching reasoning rules:', error);
+    throw error;
   }
 };
 

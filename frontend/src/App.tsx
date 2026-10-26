@@ -7,6 +7,7 @@ import KnowledgeExplorerModal from './components/KnowledgeExplorerModal';
 import SyllabusModal from './components/SyllabusModal';
 import FutureModuleModal from './components/FutureModuleModal';
 import PathForgeView from './components/PathForgeView';
+import WhatIfLabView from './components/WhatIfLabView';
 import { Message } from './types';
 import { checkHealth } from './services/api';
 
@@ -16,9 +17,9 @@ export function App() {
       id: 'welcome-1',
       role: 'assistant',
       content:
-        "Hello! I'm Learnify AI, your intelligent academic assistant for Artificial Intelligence (Phase 2). I can solve curriculum planning problems via classical AI search (BFS, DFS, Bidirectional Search, Greedy Best-First) and generate constraint-based study schedules with backtracking in PathForge. Every answer is grounded in verified curriculum records and transparently traced in ProofLens. What would you like to explore today?",
+        "Hello! I'm Learnify AI, your intelligent academic assistant for Artificial Intelligence (Phase 3). I can solve curriculum planning problems via classical AI search in PathForge and evaluate academic policy decisions via first-order logic, declarative production rules, and nonmonotonic exception overrides in WhatIf Lab. Every answer is grounded in verified curriculum records and transparently traced in ProofLens. What would you like to explore today?",
       timestamp: new Date(),
-      conceptsUsed: ['Simple Reflex Agent', 'Perception & Action', 'Problem Spaces and Search'],
+      conceptsUsed: ['Simple Reflex Agent', 'Perception & Action', 'Problem Spaces and Search', 'First-Order Logic & Rule-Based Reasoning'],
       matchScore: 1.0,
       sources: [
         {
@@ -85,10 +86,9 @@ export function App() {
     if (view === 'knowledge') {
       setIsKnowledgeOpen(true);
     } else if (view === 'pathforge') {
-      // PathForge is now live in Phase 2
       setActiveView('pathforge');
     } else if (view === 'whatif') {
-      setFutureModule('whatif');
+      setActiveView('whatif');
     } else if (view === 'syllabus') {
       setIsSyllabusOpen(true);
     }
@@ -141,6 +141,10 @@ export function App() {
     setActiveView('pathforge');
   };
 
+  const handleOpenWhatIf = () => {
+    setActiveView('whatif');
+  };
+
   const handleAskFromKnowledge = (question: string) => {
     setPendingQuery(question);
     setActiveView('chat');
@@ -169,11 +173,20 @@ export function App() {
           onOpenKnowledge={() => setIsKnowledgeOpen(true)}
           onNewChat={handleNewChat}
           onOpenPathForge={() => handleOpenPathForge()}
+          onOpenWhatIf={handleOpenWhatIf}
         />
 
-        {/* Center Workspace: Chat or PathForge */}
+        {/* Center Workspace: Chat, PathForge, or WhatIf Lab */}
         <div className="flex-1 flex overflow-hidden">
-          {activeView === 'pathforge' ? (
+          {activeView === 'whatif' ? (
+            <WhatIfLabView
+              onBackToChat={() => setActiveView('chat')}
+              onSyncTraceToProofLens={(syntheticMsg) => {
+                setActiveMessage(syntheticMsg);
+                setIsProofLensOpen(true);
+              }}
+            />
+          ) : activeView === 'pathforge' ? (
             <PathForgeView
               onBackToChat={() => setActiveView('chat')}
               onSyncTraceToProofLens={(syntheticMsg) => {

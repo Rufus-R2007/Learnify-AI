@@ -35,6 +35,8 @@ from app.database import (
     get_all_knowledge,
 )
 from app.services.pathforge_service import pathforge_service
+from app.services.reasoning_service import reasoning_service
+from app.reasoning.bayesian import bayesian_classifier
 
 # Common English conversational stopwords to filter out for keyword search
 STOPWORDS = {
@@ -256,6 +258,17 @@ class GoalOrientedClassifier:
         "prepare for exam", "what do i need to know before studying", "study resources"
     ]
 
+    LOGICAL_REASONING_TRIGGERS = [
+        "demo policy", "sample policy", "exam policy", "eligibility policy", "whatif", "what if",
+        "am i eligible", "why am i eligible", "why am i not eligible", "why did i fail",
+        "what requirements", "what do i need to satisfy", "attendance condition",
+        "approved exemption", "medical exemption", "medical waiver", "approved waiver",
+        "simulate my eligibility", "simulate eligibility", "what happens if my attendance",
+        "if my attendance", "if attendance improves", "what if an approved", "missing conditions",
+        "which conditions are still missing", "what do i need to satisfy to become eligible",
+        "under this example", "under the demo", "under this policy", "satisfy the attendance"
+    ]
+
     @classmethod
     def identify_goal(cls, normalized_text: str, keywords: List[str]) -> str:
         # 1. Simple Reflex: Greetings
@@ -267,11 +280,21 @@ class GoalOrientedClassifier:
         if any(cap in normalized_text for cap in cls.CAPABILITY_TRIGGERS):
             return "GOAL_CAPABILITY"
 
-        # 3. Institutional / Private data guardrail
+        # 3. Institutional / Private data guardrail (protected student records)
+        # CRITICAL: Guardrails MUST precede reasoning and probabilistic classifiers
         if any(inst in normalized_text for inst in cls.INSTITUTIONAL_TRIGGERS) or (
             "attendance" in normalized_text and ("my" in normalized_text or "percentage" in normalized_text)
         ):
             return "GOAL_PERSONAL_OR_INSTITUTIONAL"
+
+        # 4. Phase 3: Logical Reasoning, WhatIf Lab & Academic Policy Simulation
+        if any(rt in normalized_text for rt in cls.LOGICAL_REASONING_TRIGGERS):
+            return "GOAL_LOGICAL_REASONING"
+
+        # Probabilistic Routing via Bayes' Theorem
+        bayes_eval = bayesian_classifier.classify(normalized_text)
+        if bayes_eval.predicted_category == "INTENT_REASONING_POLICY" and not bayes_eval.is_uncertain:
+            return "GOAL_LOGICAL_REASONING"
 
         # 4. PathForge Planning & Prerequisite Search (Phase 2 Signature Engine)
         if any(pt in normalized_text for pt in cls.PATHFORGE_PLANNING_TRIGGERS):
@@ -619,6 +642,181 @@ class IntelligentAgent:
                     "Show me the prerequisites for Bayesian reasoning"
                 ],
                 missingInfo="Target learning topic was not specified in the planning query."
+            )
+
+        # CASE LOGICAL_REASONING: Academic Decision Reasoning & WhatIf Simulation (Phase 3 Signature Innovation)
+        if goal == "GOAL_LOGICAL_REASONING":
+            concepts_used.append("Knowledge Representation & Predicate Logic")
+            concepts_used.append("Rule-Based Symbolic Reasoning")
+            concepts_used.append("Bayesian Intent Classification")
+            concepts_used.append("WhatIf Academic Decision Simulator")
+
+            query_lower = perception["normalized"]
+
+            # Select applicable policy
+            if any(w in query_lower for w in ["exemption", "waiver", "medical", "approved exemption", "sports"]):
+                policy_id = "policy-exception-waiver-v1"
+            elif any(w in query_lower for w in ["lab", "clearance", "incomplete", "laboratory"]):
+                policy_id = "policy-incomplete-info-v1"
+            elif any(w in query_lower for w in ["honors", "gpa", "conduct", "merit"]):
+                policy_id = "policy-academic-honors-v1"
+            else:
+                policy_id = "policy-exam-eligibility-v1"
+
+            # Parse hypothetical scenario inputs
+            scenario_inputs: Dict[str, Any] = {}
+
+            # Parse attendance percentage if provided (e.g. "78%", "78 percent")
+            att_match = re.search(r'(\d{1,3})\s*(?:%|percent)', query_lower)
+            if att_match:
+                scenario_inputs["attendance_percentage"] = float(att_match.group(1))
+
+            # Parse assignment completion if mentioned
+            if "assignment" in query_lower:
+                if any(neg in query_lower for neg in ["not completed", "incomplete", "didn't", "did not", "failed"]):
+                    scenario_inputs["assignment_completed"] = False
+                elif any(pos in query_lower for pos in ["completed", "submitted", "done", "yes"]):
+                    scenario_inputs["assignment_completed"] = True
+
+            # Parse exemption
+            if any(w in query_lower for w in ["exemption", "waiver", "medical"]):
+                if any(neg in query_lower for neg in ["no exemption", "without exemption", "not approved"]):
+                    scenario_inputs["approved_exemption"] = False
+                else:
+                    scenario_inputs["approved_exemption"] = True
+
+            # Check if this is a diagnostic backward reasoning question ("Why am I...", "Why did I...", "Explain why...")
+            is_diagnostic_why = any(w in query_lower for w in ["why am i", "why did i", "why not", "why", "explain why", "missing condition"])
+
+            if is_diagnostic_why:
+                concepts_used.append("Goal-Driven Backward Chaining")
+                concepts_used.append("First-Order Horn Resolution")
+                backward_res, diag_traces = reasoning_service.prove_goal(
+                    policy_id=policy_id,
+                    goal_predicate="eligible",
+                    desired_value=True,
+                    entity_id="student_01",
+                    scenario_facts=scenario_inputs if scenario_inputs else None,
+                )
+
+                policy_obj = reasoning_service.load_policy(policy_id)
+
+                lines = [
+                    f"### 🧠 Diagnostic Reasoning: **{policy_obj.name}**\n",
+                    f"> ℹ️ *{policy_obj.disclaimer}*\n",
+                    f"**Target Goal:** `eligible(student_01) = True`\n",
+                    f"**Proof Status:** `{backward_res.status}`\n",
+                    f"**Explanation:** {backward_res.explanation}\n"
+                ]
+
+                if backward_res.supporting_facts:
+                    lines.append("\n**Supporting Verified Facts:**")
+                    for k, v in backward_res.supporting_facts.items():
+                        lines.append(f"• `{k}`: **{v}**")
+
+                if backward_res.missing_conditions:
+                    lines.append("\n⚠️ **Unresolved Missing Information:**")
+                    for m in backward_res.missing_conditions:
+                        lines.append(f"• Condition `{m}` is missing or unverified.")
+
+                lines.append(
+                    "\n---\n"
+                    "💡 **Explore in WhatIf Lab:**\n"
+                    "• Open **WhatIf Lab** in the sidebar to simulate changing attendance or toggling approved exceptions.\n"
+                    "• Inspect the full interactive proof tree and rule dependencies."
+                )
+
+                for dt in diag_traces:
+                    step_counter += 1
+                    dt.id = f"step-{step_counter}"
+                    traces.append(dt)
+
+                return ChatResponse(
+                    response="\n".join(lines),
+                    conceptsUsed=concepts_used,
+                    confidence=None,
+                    matchScore=1.0,
+                    sources=[SourceReference(id="src-demo", name="Learnify AI WhatIf Rules", description="Illustrative Academic Decision Policy")],
+                    trace=traces,
+                    status=ResponseStatus.ANSWERED,
+                    suggestions=[
+                        "What if my attendance improves to 78%?",
+                        "What if an approved exemption applies?",
+                        "Am I eligible under the demo policy?"
+                    ]
+                )
+
+            # Otherwise, evaluate forward chaining scenario
+            concepts_used.append("Data-Driven Forward Chaining")
+            concepts_used.append("Nonmonotonic Exception Reasoning")
+            eval_res, eval_traces = reasoning_service.evaluate_scenario(
+                policy_id=policy_id,
+                scenario_facts=scenario_inputs,
+                entity_id="student_01",
+                target_predicate="eligible",
+            )
+
+            policy_obj = reasoning_service.load_policy(policy_id)
+
+            status_badge = "✅ ELIGIBLE (Requirements Satisfied)" if eval_res.final_decision is True else "❌ INELIGIBLE (Requirements Not Met)"
+            if eval_res.decision_status == "OVERRIDDEN_BY_EXCEPTION":
+                status_badge = "🛡️ ELIGIBLE VIA EXCEPTION OVERRIDE"
+            elif eval_res.decision_status == "INCOMPLETE_INFO":
+                status_badge = "⚠️ UNRESOLVED (Incomplete Information)"
+
+            lines = [
+                f"### ⚖️ Academic Decision Simulator: **{policy_obj.name}**\n",
+                f"> ℹ️ *{policy_obj.disclaimer}*\n",
+                f"**Decision:** **{status_badge}**\n",
+                f"**Summary:** {eval_res.explanation}\n",
+                "\n**Evaluated Scenario Facts:**",
+            ]
+
+            for k, v in eval_res.initial_facts.items():
+                is_hyp = k in scenario_inputs
+                tag = "(hypothetical input)" if is_hyp else "(baseline record)"
+                lines.append(f"• `{k}`: **{v}** *{tag}*")
+
+            if eval_res.satisfied_conditions:
+                lines.append("\n**Satisfied Requirements:**")
+                for sc in eval_res.satisfied_conditions[:4]:
+                    lines.append(f"• ✅ `{sc['predicate']}` {sc['operator']} {sc['expected']} (actual: `{sc['actual']}`)")
+
+            if eval_res.unsatisfied_conditions:
+                lines.append("\n**Unsatisfied Requirements:**")
+                for uc in eval_res.unsatisfied_conditions[:3]:
+                    lines.append(f"• ❌ `{uc['predicate']}` requires `{uc['operator']} {uc['expected']}` (actual: `{uc['actual']}`)")
+
+            if eval_res.overridden_rules:
+                lines.append("\n**Nonmonotonic Exception Overrides:**")
+                for ov in eval_res.overridden_rules:
+                    lines.append(f"• 🛡️ Rule `{ov.id}` ({ov.name}) was overridden by active exemption.")
+
+            lines.append(
+                "\n---\n"
+                "💡 **Next Steps:**\n"
+                "• Click **WhatIf Lab** in the left sidebar to adjust attendance sliders, toggle exemptions, and see instant counterfactual diffs.\n"
+                "• Ask me: *'Why am I not eligible?'* or *'What if my attendance improves to 78%?'*"
+            )
+
+            for et in eval_traces:
+                step_counter += 1
+                et.id = f"step-{step_counter}"
+                traces.append(et)
+
+            return ChatResponse(
+                response="\n".join(lines),
+                conceptsUsed=concepts_used,
+                confidence=None,
+                matchScore=1.0,
+                sources=[SourceReference(id="src-demo", name="Learnify AI WhatIf Rules", description="Illustrative Academic Decision Policy")],
+                trace=traces,
+                status=ResponseStatus.ANSWERED,
+                suggestions=[
+                    "Why am I not eligible?",
+                    "What if my attendance improves to 78%?",
+                    "What if an approved medical waiver applies?"
+                ]
             )
 
         # CASE D: FAQ RETRIEVAL

@@ -5,7 +5,7 @@ knowledge records, and syllabus tracking across all phases.
 """
 
 from pydantic import BaseModel, Field, ConfigDict
-from typing import List, Optional, Any
+from typing import List, Optional, Any, Dict
 from datetime import datetime
 from enum import Enum
 
@@ -177,3 +177,43 @@ class ConceptsResponse(BaseModel):
     """Response returned by GET /api/chat/concepts"""
     units: List[SyllabusUnit]
     phase_focus: int = 1
+
+
+# =========================================================================
+# Phase 3 (Hiran Antony): Reasoning & WhatIf Lab Schemas
+# =========================================================================
+
+class EvaluateScenarioRequest(BaseModel):
+    """Request payload to evaluate scenario facts against a policy."""
+    policy_id: str = Field(..., description="ID of named policy, e.g. 'policy-exam-eligibility-v1'")
+    scenario_facts: Dict[str, Any] = Field(..., description="Map of predicate names to values")
+    entity_id: str = Field(default="student_01", description="Student or entity identifier")
+    target_predicate: str = Field(default="eligible", description="Goal predicate to assess")
+
+
+class ProveGoalRequest(BaseModel):
+    """Request payload to prove a goal using backward chaining and SLD resolution."""
+    policy_id: str = Field(..., description="ID of named policy")
+    goal: str = Field(..., description="Target predicate to prove, e.g. 'eligible'")
+    desired_value: Any = Field(default=True, description="Desired outcome value")
+    entity_id: str = Field(default="student_01", description="Student identifier")
+    scenario_facts: Optional[Dict[str, Any]] = Field(default=None, description="Optional overriding scenario inputs")
+
+
+class ConsistencyCheckRequest(BaseModel):
+    """Request payload to check logical consistency of policy rules."""
+    policy_id: str = Field(..., description="ID of policy to validate")
+
+
+class IntentClassificationRequest(BaseModel):
+    """Request payload to classify student query intent via Bayes' Theorem."""
+    query: str = Field(..., min_length=1, max_length=1000, description="Student natural language query")
+
+
+class WhatIfCompareRequest(BaseModel):
+    """Request payload to compare baseline scenario against modified scenario."""
+    policy_id: str = Field(..., description="ID of named policy")
+    baseline_facts: Dict[str, Any] = Field(..., description="Original input facts")
+    modified_facts: Dict[str, Any] = Field(..., description="Modified counterfactual input facts")
+    entity_id: str = Field(default="student_01", description="Student identifier")
+

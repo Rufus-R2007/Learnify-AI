@@ -7,7 +7,7 @@ CORS middleware, and routers for Chat, ProofLens, and Knowledge Explorer.
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import chat, knowledge, pathforge
+from app.api import chat, knowledge, pathforge, reasoning, whatif
 from app.core.config import settings
 from app.database import init_db, seed_db
 import logging
@@ -30,8 +30,8 @@ async def lifespan(app: FastAPI):
 # Create FastAPI app
 app = FastAPI(
     title="Learnify AI API",
-    description="Intelligent Conversational Student-Support Platform powered by Unit I Foundations, Unit II Search & Planning (PathForge), Transparent ProofLens Tracing, and SQLite Knowledge Base.",
-    version="2.0.0",
+    description="Intelligent Conversational Student-Support Platform powered by Unit I Foundations, Unit II Search & Planning (PathForge), Unit III & IV Knowledge Representation, Symbolic Logic & WhatIf Lab, Transparent ProofLens Tracing, and SQLite Knowledge Base.",
+    version="3.0.0",
     lifespan=lifespan,
 )
 
@@ -48,25 +48,28 @@ app.add_middleware(
 app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
 app.include_router(knowledge.router, prefix="/api/knowledge", tags=["knowledge"])
 app.include_router(pathforge.router, prefix="/api/pathforge", tags=["pathforge"])
+app.include_router(reasoning.router, prefix="/api/reasoning", tags=["reasoning"])
+app.include_router(whatif.router, prefix="/api/whatif", tags=["whatif"])
 
 
 @app.get("/")
 async def root():
-    """Root endpoint with API overview and Phase 2 metadata"""
+    """Root endpoint with API overview and Phase 3 metadata"""
     return {
         "name": "Learnify AI",
-        "description": "AI-Powered Chatbot for Student Queries and Intelligent Planning",
-        "version": "2.0.0",
-        "phase": 2,
+        "description": "AI-Powered Chatbot for Student Queries, Planning & Symbolic Reasoning",
+        "version": "3.0.0",
+        "phase": 3,
         "responsible_developers": {
             "Phase 1": "URK25CS1090 — Rufus Samuel R",
-            "Phase 2": "URK25CS1063 — Yogith Joy J"
+            "Phase 2": "URK25CS1063 — Yogith Joy J",
+            "Phase 3": "URK25CS1034 — Hiran Antony"
         },
         "status": "operational",
         "signature_innovations": {
-            "ProofLens": "Operational (Phase 1 & 2 Live Tracing)",
+            "ProofLens": "Operational (Phase 1, 2 & 3 Live Execution Tracing)",
             "PathForge": "Operational (Phase 2 - Search Algorithms & Study Planning)",
-            "WhatIf Lab": "Prepared interfaces (Phase 3)"
+            "WhatIf Lab": "Operational (Phase 3 - Explainable Logic & Decision Simulator)"
         },
         "ai_capabilities": [
             "Perception & Input Normalization",
@@ -78,6 +81,14 @@ async def root():
             "Informed Greedy Best-First Search (Heuristic)",
             "Topological Dependency Ordering & Prerequisite Closure",
             "Constraint Satisfaction & Backtracking Scheduler",
+            "First-Order Predicate Logic & Terms",
+            "Robinson Unification with Occurs-Check",
+            "Propositional Resolution & Contradiction Detection",
+            "Horn-Clause SLD Resolution Engine",
+            "Data-Driven Forward Chaining",
+            "Goal-Driven Diagnostic Backward Chaining",
+            "Nonmonotonic Exception Reasoning & Overrides",
+            "Bayesian Probabilistic Intent Estimation",
             "Truthful Uncertainty Handling",
             "ProofLens Measured Execution Tracing"
         ]
@@ -90,13 +101,15 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "Learnify AI Backend",
-        "phase": 2,
+        "phase": 3,
         "database": "sqlite3",
         "features": {
             "chat": "active",
             "prooflens": "active",
             "knowledge_explorer": "active",
             "pathforge": "active",
+            "whatif_lab": "active",
+            "symbolic_reasoning": "active",
             "syllabus_tracker": "active"
         }
     }

@@ -1,20 +1,21 @@
 # FastAPI and server
-fastapi==0.109.2
-uvicorn[standard]==0.27.1
-python-multipart==0.0.9
+fastapi>=0.109.2
+uvicorn[standard]>=0.27.1
+python-multipart>=0.0.9
 
 # CORS and middleware
-python-dotenv==1.0.1
+python-dotenv>=1.0.1
 
 # Data validation
-pydantic==2.6.1
-pydantic-settings==2.1.0
+pydantic>=2.6.1
+pydantic-settings>=2.1.0
 
 # AI/ML libraries (placeholder for future implementation)
-# numpy==1.26.4
-# scikit-learn==1.4.0
+# numpy>=1.26.4
+# scikit-learn>=1.4.0
 
 # Development
-pytest==8.0.0
-pytest-asyncio==0.23.5
-httpx>=0.27.0,<0.28.0
+pytest>=8.0.0
+pytest-asyncio>=0.23.5
+httpx>=0.27.0
+

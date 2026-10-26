@@ -5,6 +5,7 @@ Uses Python's built-in sqlite3 for lightweight persistence.
 
 import sqlite3
 import os
+import json
 from typing import List, Dict, Optional, Any
 from contextlib import contextmanager
 
@@ -76,6 +77,46 @@ def init_db():
                 PRIMARY KEY (parent_id, child_id),
                 FOREIGN KEY (parent_id) REFERENCES topics(id),
                 FOREIGN KEY (child_id) REFERENCES topics(id)
+            );
+
+            -- Phase 3 (Hiran Antony): Declarative Policies, Decision Rules & Knowledge Facts
+            CREATE TABLE IF NOT EXISTS policies (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                description TEXT,
+                version TEXT DEFAULT '1.0.0',
+                is_illustrative INTEGER DEFAULT 1,
+                disclaimer TEXT,
+                default_decision TEXT DEFAULT 'INELIGIBLE'
+            );
+
+            CREATE TABLE IF NOT EXISTS rules (
+                id TEXT PRIMARY KEY,
+                policy_id TEXT NOT NULL,
+                name TEXT NOT NULL,
+                description TEXT,
+                conditions_json TEXT NOT NULL,
+                conclusion_json TEXT NOT NULL,
+                priority INTEGER DEFAULT 10,
+                is_exception INTEGER DEFAULT 0,
+                overrides_rule_id TEXT,
+                source_id TEXT DEFAULT 'src-demo',
+                FOREIGN KEY (policy_id) REFERENCES policies(id),
+                FOREIGN KEY (source_id) REFERENCES sources(id)
+            );
+
+            CREATE TABLE IF NOT EXISTS verified_facts (
+                id TEXT PRIMARY KEY,
+                entity_id TEXT NOT NULL,
+                predicate TEXT NOT NULL,
+                arguments_json TEXT,
+                value_json TEXT,
+                source_id TEXT DEFAULT 'src-demo',
+                verification_status TEXT DEFAULT 'VERIFIED',
+                policy_id TEXT,
+                context TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (source_id) REFERENCES sources(id)
             );
         """)
 
@@ -342,6 +383,136 @@ def seed_db():
             faqs,
         )
 
+        # --- Phase 3 (Hiran Antony): Declarative Policies & Reasoning Seed Data ---
+        policies = [
+            (
+                "policy-exam-eligibility-v1",
+                "Sample Examination Eligibility Policy",
+                "Demonstration policy evaluating student eligibility for semester final examinations based on attendance threshold (75%) and assignment completion.",
+                "1.0.0",
+                1,
+                "Illustrative academic policy for demonstration. This is not an official institutional eligibility decision.",
+                "INELIGIBLE"
+            ),
+            (
+                "policy-exception-waiver-v1",
+                "Sample Exception Handling & Medical Waiver Policy",
+                "Demonstration policy illustrating nonmonotonic reasoning: approved medical or official representation exemptions override standard attendance deficits.",
+                "1.0.0",
+                1,
+                "Illustrative academic policy for demonstration. This is not an official institutional eligibility decision.",
+                "INELIGIBLE"
+            ),
+            (
+                "policy-incomplete-info-v1",
+                "Sample Incomplete Information & Lab Clearance Policy",
+                "Demonstrates truthful uncertainty handling: evaluates attendance, assignments, and required laboratory safety clearance. If safety clearance is unrecorded, the result is reported as unresolved/unknown rather than guessed.",
+                "1.0.0",
+                1,
+                "Illustrative academic policy for demonstration. This is not an official institutional eligibility decision.",
+                "INELIGIBLE"
+            ),
+            (
+                "policy-academic-honors-v1",
+                "Sample Academic Honors & Merit Recognition Policy",
+                "Demonstration criteria for graduation honors: minimum GPA 3.75, completed credits >= 60, and no disciplinary violations.",
+                "1.0.0",
+                1,
+                "Illustrative academic policy for demonstration. This is not an official institutional eligibility decision.",
+                "INELIGIBLE"
+            ),
+        ]
+        conn.executemany(
+            "INSERT OR REPLACE INTO policies (id, name, description, version, is_illustrative, disclaimer, default_decision) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            policies,
+        )
+
+        # Declarative Rules
+        rules = [
+            # Policy 1: Exam Eligibility
+            ("rule-exam-att-sat", "policy-exam-eligibility-v1", "Attendance Requirement Met", "Attendance reaches or exceeds 75% threshold",
+             json.dumps([{"predicate": "attendance_percentage", "operator": ">=", "expected_value": 75}]),
+             json.dumps({"predicate": "attendance_satisfied", "value": True}), 10, 0, None, "src-demo"),
+            ("rule-exam-att-unsat", "policy-exam-eligibility-v1", "Attendance Deficit", "Attendance below 75% threshold",
+             json.dumps([{"predicate": "attendance_percentage", "operator": "<", "expected_value": 75}]),
+             json.dumps({"predicate": "attendance_satisfied", "value": False}), 5, 0, None, "src-demo"),
+            ("rule-exam-asgn-sat", "policy-exam-eligibility-v1", "Assignment Completion Met", "Required coursework assignments are completed",
+             json.dumps([{"predicate": "assignment_completed", "operator": "==", "expected_value": True}]),
+             json.dumps({"predicate": "assignment_satisfied", "value": True}), 10, 0, None, "src-demo"),
+            ("rule-exam-qual-sat", "policy-exam-eligibility-v1", "Standard Examination Qualification", "Both attendance and assignment requirements are satisfied",
+             json.dumps([{"predicate": "attendance_satisfied", "operator": "==", "expected_value": True}, {"predicate": "assignment_satisfied", "operator": "==", "expected_value": True}]),
+             json.dumps({"predicate": "eligible", "value": True}), 10, 0, None, "src-demo"),
+            ("rule-exam-qual-unsat", "policy-exam-eligibility-v1", "Examination Disqualification", "Attendance requirement not satisfied",
+             json.dumps([{"predicate": "attendance_satisfied", "operator": "==", "expected_value": False}]),
+             json.dumps({"predicate": "eligible", "value": False}), 5, 0, None, "src-demo"),
+
+            # Policy 2: Exception Handling & Medical Waiver
+            ("rule-exc-att-sat", "policy-exception-waiver-v1", "Ordinary Attendance Met", "Attendance >= 75%",
+             json.dumps([{"predicate": "attendance_percentage", "operator": ">=", "expected_value": 75}]),
+             json.dumps({"predicate": "attendance_satisfied", "value": True}), 10, 0, None, "src-demo"),
+            ("rule-exc-att-unsat", "policy-exception-waiver-v1", "Ordinary Attendance Deficit", "Attendance < 75%",
+             json.dumps([{"predicate": "attendance_percentage", "operator": "<", "expected_value": 75}]),
+             json.dumps({"predicate": "attendance_satisfied", "value": False}), 5, 0, None, "src-demo"),
+            ("rule-exc-asgn-sat", "policy-exception-waiver-v1", "Coursework Assignments Met", "Assignments completed",
+             json.dumps([{"predicate": "assignment_completed", "operator": "==", "expected_value": True}]),
+             json.dumps({"predicate": "assignment_satisfied", "value": True}), 10, 0, None, "src-demo"),
+            ("rule-exc-std-qual", "policy-exception-waiver-v1", "Standard Examination Qualification", "Both conditions satisfied",
+             json.dumps([{"predicate": "attendance_satisfied", "operator": "==", "expected_value": True}, {"predicate": "assignment_satisfied", "operator": "==", "expected_value": True}]),
+             json.dumps({"predicate": "eligible", "value": True}), 10, 0, None, "src-demo"),
+            ("rule-exc-std-disqual", "policy-exception-waiver-v1", "Default Disqualification", "Ordinary attendance not satisfied",
+             json.dumps([{"predicate": "attendance_satisfied", "operator": "==", "expected_value": False}]),
+             json.dumps({"predicate": "eligible", "value": False}), 5, 0, None, "src-demo"),
+            ("rule-exc-approved-override", "policy-exception-waiver-v1", "Approved Exemption Waiver Override", "Official approved exemption overrides ordinary attendance deficit",
+             json.dumps([{"predicate": "approved_exemption", "operator": "==", "expected_value": True}, {"predicate": "assignment_satisfied", "operator": "==", "expected_value": True}]),
+             json.dumps({"predicate": "eligible", "value": True}), 50, 1, "rule-exc-std-disqual", "src-demo"),
+
+            # Policy 3: Incomplete Information & Lab Clearance
+            ("rule-inc-att", "policy-incomplete-info-v1", "Attendance Check", "Attendance >= 75%",
+             json.dumps([{"predicate": "attendance_percentage", "operator": ">=", "expected_value": 75}]),
+             json.dumps({"predicate": "attendance_satisfied", "value": True}), 10, 0, None, "src-demo"),
+            ("rule-inc-asgn", "policy-incomplete-info-v1", "Assignment Check", "Assignments completed",
+             json.dumps([{"predicate": "assignment_completed", "operator": "==", "expected_value": True}]),
+             json.dumps({"predicate": "assignment_satisfied", "value": True}), 10, 0, None, "src-demo"),
+            ("rule-inc-lab", "policy-incomplete-info-v1", "Laboratory Safety Clearance", "Mandatory lab safety clearance certified",
+             json.dumps([{"predicate": "lab_clearance", "operator": "==", "expected_value": True}]),
+             json.dumps({"predicate": "lab_satisfied", "value": True}), 10, 0, None, "src-demo"),
+            ("rule-inc-all", "policy-incomplete-info-v1", "Triple Requirement Clearance", "Attendance, assignment, and lab clearance certified",
+             json.dumps([{"predicate": "attendance_satisfied", "operator": "==", "expected_value": True}, {"predicate": "assignment_satisfied", "operator": "==", "expected_value": True}, {"predicate": "lab_satisfied", "operator": "==", "expected_value": True}]),
+             json.dumps({"predicate": "eligible", "value": True}), 10, 0, None, "src-demo"),
+
+            # Policy 4: Academic Honors
+            ("rule-honors-gpa", "policy-academic-honors-v1", "GPA Requirement", "GPA >= 3.75",
+             json.dumps([{"predicate": "gpa", "operator": ">=", "expected_value": 3.75}]),
+             json.dumps({"predicate": "gpa_satisfied", "value": True}), 10, 0, None, "src-demo"),
+            ("rule-honors-credits", "policy-academic-honors-v1", "Credits Requirement", "Credits completed >= 60",
+             json.dumps([{"predicate": "credits_completed", "operator": ">=", "expected_value": 60}]),
+             json.dumps({"predicate": "credits_satisfied", "value": True}), 10, 0, None, "src-demo"),
+            ("rule-honors-conduct", "policy-academic-honors-v1", "Disciplinary Clearance", "No active conduct sanctions",
+             json.dumps([{"predicate": "disciplinary_clearance", "operator": "==", "expected_value": True}]),
+             json.dumps({"predicate": "conduct_satisfied", "value": True}), 10, 0, None, "src-demo"),
+            ("rule-honors-qual", "policy-academic-honors-v1", "Academic Honors Conferred", "GPA, credit, and conduct criteria satisfied",
+             json.dumps([{"predicate": "gpa_satisfied", "operator": "==", "expected_value": True}, {"predicate": "credits_satisfied", "operator": "==", "expected_value": True}, {"predicate": "conduct_satisfied", "operator": "==", "expected_value": True}]),
+             json.dumps({"predicate": "eligible", "value": True}), 10, 0, None, "src-demo"),
+        ]
+        conn.executemany(
+            "INSERT OR REPLACE INTO rules (id, policy_id, name, description, conditions_json, conclusion_json, priority, is_exception, overrides_rule_id, source_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            rules,
+        )
+
+        # Baseline Verified Student Facts for student_01 (Hiran Antony demonstration scenario)
+        verified_facts = [
+            ("fact-att-student01", "student_01", "attendance_percentage", json.dumps(["student_01"]), json.dumps(68), "src-demo", "VERIFIED", "policy-exam-eligibility-v1", "Baseline academic demo record"),
+            ("fact-asgn-student01", "student_01", "assignment_completed", json.dumps(["student_01"]), json.dumps(True), "src-demo", "VERIFIED", "policy-exam-eligibility-v1", "Coursework submission record"),
+            ("fact-exemp-student01", "student_01", "approved_exemption", json.dumps(["student_01"]), json.dumps(False), "src-demo", "VERIFIED", "policy-exception-waiver-v1", "Official exemption record"),
+            ("fact-gpa-student01", "student_01", "gpa", json.dumps(["student_01"]), json.dumps(3.82), "src-demo", "VERIFIED", "policy-academic-honors-v1", "Academic cumulative GPA"),
+            ("fact-credits-student01", "student_01", "credits_completed", json.dumps(["student_01"]), json.dumps(64), "src-demo", "VERIFIED", "policy-academic-honors-v1", "Total completed credit count"),
+            ("fact-conduct-student01", "student_01", "disciplinary_clearance", json.dumps(["student_01"]), json.dumps(True), "src-demo", "VERIFIED", "policy-academic-honors-v1", "Office of Student Affairs record"),
+        ]
+        conn.executemany(
+            "INSERT OR REPLACE INTO verified_facts (id, entity_id, predicate, arguments_json, value_json, source_id, verification_status, policy_id, context) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            verified_facts,
+        )
+
 
 def get_all_knowledge() -> List[Dict[str, Any]]:
     """Retrieve all knowledge records with source info."""
@@ -519,4 +690,100 @@ def get_all_topic_relationships() -> List[Dict[str, str]]:
             FROM topic_relationships
         """).fetchall()
         return [dict(r) for r in rows]
+
+
+# =========================================================================
+# Phase 3 (Hiran Antony): Declarative Policies, Rules & Knowledge Database Helpers
+# =========================================================================
+
+def get_all_policies() -> List[Dict[str, Any]]:
+    """Retrieve all academic decision policies."""
+    with get_db() as conn:
+        rows = conn.execute("""
+            SELECT id, name, description, version, is_illustrative, disclaimer, default_decision
+            FROM policies
+            ORDER BY id
+        """).fetchall()
+        policies = []
+        for r in rows:
+            p = dict(r)
+            p["is_illustrative"] = bool(p["is_illustrative"])
+            p["rules"] = get_rules_for_policy(p["id"])
+            policies.append(p)
+        return policies
+
+
+def get_policy_by_id(policy_id: str) -> Optional[Dict[str, Any]]:
+    """Retrieve a single policy with its declarative rules."""
+    with get_db() as conn:
+        row = conn.execute("""
+            SELECT id, name, description, version, is_illustrative, disclaimer, default_decision
+            FROM policies
+            WHERE id = ?
+        """, (policy_id,)).fetchone()
+        if not row:
+            return None
+        p = dict(row)
+        p["is_illustrative"] = bool(p["is_illustrative"])
+        p["rules"] = get_rules_for_policy(policy_id)
+        return p
+
+
+def get_rules_for_policy(policy_id: str) -> List[Dict[str, Any]]:
+    """Retrieve all rules for a given policy ordered by priority descending."""
+    with get_db() as conn:
+        rows = conn.execute("""
+            SELECT id, policy_id, name, description, conditions_json, conclusion_json,
+                   priority, is_exception, overrides_rule_id, source_id
+            FROM rules
+            WHERE policy_id = ?
+            ORDER BY priority DESC, id
+        """, (policy_id,)).fetchall()
+        rules = []
+        for r in rows:
+            rule_dict = dict(r)
+            rule_dict["conditions"] = json.loads(rule_dict["conditions_json"])
+            rule_dict["conclusion"] = json.loads(rule_dict["conclusion_json"])
+            rule_dict["is_exception"] = bool(rule_dict["is_exception"])
+            rules.append(rule_dict)
+        return rules
+
+
+def get_all_rules() -> List[Dict[str, Any]]:
+    """Retrieve all declarative rules across all policies."""
+    with get_db() as conn:
+        rows = conn.execute("""
+            SELECT id, policy_id, name, description, conditions_json, conclusion_json,
+                   priority, is_exception, overrides_rule_id, source_id
+            FROM rules
+            ORDER BY policy_id, priority DESC
+        """).fetchall()
+        rules = []
+        for r in rows:
+            rule_dict = dict(r)
+            rule_dict["conditions"] = json.loads(rule_dict["conditions_json"])
+            rule_dict["conclusion"] = json.loads(rule_dict["conclusion_json"])
+            rule_dict["is_exception"] = bool(rule_dict["is_exception"])
+            rules.append(rule_dict)
+        return rules
+
+
+def get_verified_facts_for_entity(entity_id: str) -> List[Dict[str, Any]]:
+    """Retrieve verified facts for a specific student or entity."""
+    with get_db() as conn:
+        rows = conn.execute("""
+            SELECT id, entity_id, predicate, arguments_json, value_json,
+                   source_id, verification_status, policy_id, context, created_at
+            FROM verified_facts
+            WHERE entity_id = ?
+            ORDER BY created_at
+        """, (entity_id,)).fetchall()
+        facts = []
+        for r in rows:
+            f = dict(r)
+            f["arguments"] = json.loads(f["arguments_json"]) if f["arguments_json"] else []
+            f["value"] = json.loads(f["value_json"]) if f["value_json"] else None
+            facts.append(f)
+        return facts
+
 

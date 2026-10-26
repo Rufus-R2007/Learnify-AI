@@ -193,48 +193,48 @@ async def get_ai_concepts() -> ConceptsResponse:
             concepts=[
                 SyllabusConceptItem(
                     unit="Unit III",
-                    concept="Semantic Networks & Frames",
-                    use_case="Concept ontology linking topics, prerequisites, and learning outcomes",
+                    concept="Knowledge Representation & Epistemic Conflict Detection",
+                    use_case="Structured educational facts with provenance, verification status, and conflict detection",
                     phase=3,
-                    status="Planned",
-                    source_reference="backend/app/core/interfaces.py::KnowledgeEngine",
-                    test_reference="tests/phase3/test_semantic_nets.py (planned)"
+                    status="Implemented and tested",
+                    source_reference="backend/app/reasoning/facts.py::FactBase",
+                    test_reference="backend/tests/test_reasoning.py::test_fact_storage_and_conflict_detection"
                 ),
                 SyllabusConceptItem(
                     unit="Unit III",
-                    concept="Propositional Logic & Truth Tables",
-                    use_case="Academic eligibility criteria validation",
+                    concept="First-Order Predicate Logic (Terms, Predicates & Clauses)",
+                    use_case="Structured logical primitives (Constants, Variables, Compound Terms, Horn Clauses)",
                     phase=3,
-                    status="Planned",
-                    source_reference="backend/app/core/interfaces.py::KnowledgeEngine",
-                    test_reference="tests/phase3/test_prop_logic.py (planned)"
+                    status="Implemented and tested",
+                    source_reference="backend/app/reasoning/predicates.py::Predicate",
+                    test_reference="backend/tests/test_reasoning.py::test_predicate_representation_and_substitution"
                 ),
                 SyllabusConceptItem(
                     unit="Unit III",
-                    concept="First-Order Predicate Logic (FOL)",
-                    use_case="Formal representation of course prerequisites (e.g. HasPrereq(x, y))",
+                    concept="Robinson's First-Order Unification Algorithm",
+                    use_case="MGU discovery, variable binding, repeated variable consistency, and occurs-check",
                     phase=3,
-                    status="Planned",
-                    source_reference="backend/app/core/interfaces.py::KnowledgeEngine",
-                    test_reference="tests/phase3/test_fol.py (planned)"
+                    status="Implemented and tested",
+                    source_reference="backend/app/reasoning/unification.py::unify",
+                    test_reference="backend/tests/test_reasoning.py::test_unification_algorithm"
                 ),
                 SyllabusConceptItem(
                     unit="Unit III",
-                    concept="Inference Rules & Resolution Refutation",
-                    use_case="Automated theorem proving for syllabus requirement satisfaction",
+                    concept="Propositional Resolution Refutation",
+                    use_case="Validating academic policy consistency and detecting formal contradictions",
                     phase=3,
-                    status="Planned",
-                    source_reference="backend/app/core/interfaces.py::KnowledgeEngine",
-                    test_reference="tests/phase3/test_resolution.py (planned)"
+                    status="Implemented and tested",
+                    source_reference="backend/app/reasoning/propositional_resolution.py::check_consistency",
+                    test_reference="backend/tests/test_reasoning.py::test_propositional_resolution_consistency"
                 ),
                 SyllabusConceptItem(
                     unit="Unit III",
-                    concept="Ontologies & Description Logics",
-                    use_case="Unified curriculum taxonomy for computer science subjects",
+                    concept="Resolution in Predicate Logic (SLD-Resolution)",
+                    use_case="Goal-directed proof derivation over definite Horn clauses with cycle prevention",
                     phase=3,
-                    status="Planned",
-                    source_reference="backend/app/core/interfaces.py::KnowledgeEngine",
-                    test_reference="tests/phase3/test_ontology.py (planned)"
+                    status="Implemented and tested",
+                    source_reference="backend/app/reasoning/horn_resolution.py::HornResolutionEngine",
+                    test_reference="backend/tests/test_reasoning.py::test_horn_clause_sld_resolution"
                 ),
             ]
         ),
@@ -246,48 +246,57 @@ async def get_ai_concepts() -> ConceptsResponse:
             concepts=[
                 SyllabusConceptItem(
                     unit="Unit IV",
-                    concept="Production Rules (IF-THEN Systems)",
-                    use_case="Academic policy rules execution for WhatIf Lab",
+                    concept="Declarative Production Rules & Named Policies",
+                    use_case="Separation of declarative knowledge from procedural execution with safe operators",
                     phase=3,
-                    status="Planned",
-                    source_reference="backend/app/core/interfaces.py::RuleEngine",
-                    test_reference="tests/phase3/test_rules.py (planned)"
+                    status="Implemented and tested",
+                    source_reference="backend/app/reasoning/rules.py::Policy",
+                    test_reference="backend/tests/test_reasoning.py::test_declarative_rule_evaluation"
                 ),
                 SyllabusConceptItem(
                     unit="Unit IV",
                     concept="Forward Chaining (Data-Driven Inference)",
-                    use_case="Inferring student academic standing from accumulated credits",
+                    use_case="Iterative deduction deriving academic eligibility conclusions from scenario facts",
                     phase=3,
-                    status="Planned",
-                    source_reference="backend/app/core/interfaces.py::RuleEngine",
-                    test_reference="tests/phase3/test_forward_chain.py (planned)"
+                    status="Implemented and tested",
+                    source_reference="backend/app/reasoning/forward_chaining.py::ForwardChainingEngine",
+                    test_reference="backend/tests/test_reasoning.py::test_forward_chaining_deduction"
                 ),
                 SyllabusConceptItem(
                     unit="Unit IV",
                     concept="Backward Chaining (Goal-Driven Diagnostic)",
-                    use_case="Determining missing prerequisites needed to graduate or enroll",
+                    use_case="Answering 'Why am I eligible?' with proof trees, missing conditions, and PROVEN/DISPROVEN/UNKNOWN states",
                     phase=3,
-                    status="Planned",
-                    source_reference="backend/app/core/interfaces.py::RuleEngine",
-                    test_reference="tests/phase3/test_backward_chain.py (planned)"
+                    status="Implemented and tested",
+                    source_reference="backend/app/reasoning/backward_chaining.py::BackwardChainingEngine",
+                    test_reference="backend/tests/test_reasoning.py::test_backward_chaining_diagnosis"
                 ),
                 SyllabusConceptItem(
                     unit="Unit IV",
-                    concept="Conflict Resolution Strategies",
-                    use_case="Prioritizing competing academic guidelines (recency, specificity)",
+                    concept="Nonmonotonic Reasoning & Exception Handling",
+                    use_case="Defeasible belief revision: approved medical exemptions override default attendance rules",
                     phase=3,
-                    status="Planned",
-                    source_reference="backend/app/core/interfaces.py::RuleEngine",
-                    test_reference="tests/phase3/test_conflict.py (planned)"
+                    status="Implemented and tested",
+                    source_reference="backend/app/reasoning/exceptions.py::NonmonotonicEngine",
+                    test_reference="backend/tests/test_reasoning.py::test_nonmonotonic_exception_overrides"
                 ),
                 SyllabusConceptItem(
                     unit="Unit IV",
-                    concept="Truth Maintenance Systems (TMS)",
-                    use_case="Tracking assumptions and rollbacks during WhatIf scenario simulations",
+                    concept="Bayesian Reasoning & Probabilistic Intent Classification",
+                    use_case="Probabilistic query routing via Bayes' Theorem with Laplace smoothing over curated dataset",
                     phase=3,
-                    status="Planned",
-                    source_reference="backend/app/core/interfaces.py::RuleEngine",
-                    test_reference="tests/phase3/test_tms.py (planned)"
+                    status="Implemented and tested",
+                    source_reference="backend/app/reasoning/bayesian.py::NaiveBayesIntentClassifier",
+                    test_reference="backend/tests/test_reasoning.py::test_bayesian_intent_classification"
+                ),
+                SyllabusConceptItem(
+                    unit="Unit IV",
+                    concept="WhatIf Lab Counterfactual Decision Simulator",
+                    use_case="Interactive explainable AI decision simulator comparing before vs after scenario adjustments",
+                    phase=3,
+                    status="Implemented and tested",
+                    source_reference="backend/app/services/whatif_service.py::WhatIfService",
+                    test_reference="backend/tests/test_reasoning.py::test_whatif_scenario_comparison"
                 ),
             ]
         ),

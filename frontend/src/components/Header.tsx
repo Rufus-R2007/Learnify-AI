@@ -1,4 +1,4 @@
-import { Menu, ShieldCheck, Plus, BookOpen, GitBranch } from 'lucide-react';
+import { Menu, ShieldCheck, Plus, BookOpen, GitBranch, FlaskConical } from 'lucide-react';
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -8,6 +8,7 @@ interface HeaderProps {
   onOpenKnowledge: () => void;
   onNewChat: () => void;
   onOpenPathForge?: () => void;
+  onOpenWhatIf?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -18,6 +19,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenKnowledge,
   onNewChat,
   onOpenPathForge,
+  onOpenWhatIf,
 }) => {
   return (
     <header className="h-14 border-b border-slate-200/80 bg-white/95 backdrop-blur-xs px-4 flex items-center justify-between z-10 shrink-0">
@@ -33,14 +35,24 @@ export const Header: React.FC<HeaderProps> = ({
 
         <div className="flex items-center space-x-2">
           <span className="text-sm font-bold text-slate-900 tracking-tight">Learnify AI</span>
-          <span className="hidden sm:inline-block px-2 py-0.5 rounded text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
-            Phase 2: Search & Planning
+          <span className="hidden sm:inline-block px-2 py-0.5 rounded text-[10px] font-semibold bg-teal-50 text-teal-800 border border-teal-200">
+            Phase 3: Logic & Reasoning
           </span>
         </div>
       </div>
 
       {/* Right: Quick Actions & ProofLens Toggle */}
       <div className="flex items-center space-x-2">
+        {onOpenWhatIf && (
+          <button
+            onClick={onOpenWhatIf}
+            className="hidden sm:inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-200/70 transition-colors"
+          >
+            <FlaskConical className="w-3.5 h-3.5 text-teal-600" />
+            <span>WhatIf Lab</span>
+          </button>
+        )}
+
         {onOpenPathForge && (
           <button
             onClick={onOpenPathForge}

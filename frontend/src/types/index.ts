@@ -222,3 +222,136 @@ export interface StudyScheduleResponse {
   trace: TraceStep[];
   warnings: string[];
 }
+
+// =========================================================================
+// Phase 3: Knowledge Representation, Logical Reasoning & WhatIf Lab Types
+// =========================================================================
+
+export interface RuleConditionItem {
+  predicate: string;
+  operator: string;
+  expected_value: any;
+  variable_name?: string;
+  threshold?: number;
+  weight?: number;
+}
+
+export interface RuleConclusionItem {
+  predicate: string;
+  value: any;
+  is_intermediate?: boolean;
+}
+
+export interface DeclarativeRule {
+  id: string;
+  policy_id: string;
+  name: string;
+  description: string;
+  conditions: RuleConditionItem[];
+  conclusion: RuleConclusionItem;
+  priority: number;
+  is_exception_rule: boolean;
+  overrides_rule_id?: string | null;
+  provenance: string;
+}
+
+export interface WhatIfPolicy {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  disclaimer: string;
+  rules?: DeclarativeRule[];
+  baseline_preset?: Record<string, any>;
+}
+
+export interface ForwardStepItem {
+  step: number;
+  rule_id: string;
+  rule_name: string;
+  matched_facts: Record<string, any>;
+  derived_conclusion: Record<string, any>;
+  is_exception: boolean;
+  overridden_rule_id?: string | null;
+}
+
+export interface ForwardChainingEvaluationResult {
+  policy_id: string;
+  entity_id: string;
+  final_decision: any;
+  decision_status: 'SATISFIED' | 'NOT_SATISFIED' | 'INCONCLUSIVE' | 'CONFLICT' | 'OVERRIDDEN';
+  initial_facts: Record<string, any>;
+  derived_facts: Record<string, any>;
+  activated_rules: DeclarativeRule[];
+  overridden_rules: DeclarativeRule[];
+  satisfied_conditions: Array<{ rule_id: string; condition: string; actual_value: any }>;
+  unsatisfied_conditions: Array<{ rule_id: string; condition: string; actual_value: any; reason: string }>;
+  missing_facts: string[];
+  fired_steps: ForwardStepItem[];
+  explanation: string;
+}
+
+export interface EvaluateWhatIfResponse {
+  result: ForwardChainingEvaluationResult;
+  trace: TraceStep[];
+  policy?: WhatIfPolicy;
+}
+
+export interface InputDiffItem {
+  predicate: string;
+  baseline_value: any;
+  modified_value: any;
+  change_type: 'modified' | 'added' | 'removed' | 'unchanged';
+}
+
+export interface CounterfactualComparisonReport {
+  policy_id: string;
+  entity_id: string;
+  decision_changed: boolean;
+  baseline_decision: any;
+  modified_decision: any;
+  baseline_status: string;
+  modified_status: string;
+  input_diffs: InputDiffItem[];
+  newly_activated_rules: string[];
+  deactivated_rules: string[];
+  newly_overridden_rules: string[];
+  delta_summary: string;
+}
+
+export interface CompareWhatIfResponse {
+  comparison: CounterfactualComparisonReport;
+  baseline_result: ForwardChainingEvaluationResult;
+  modified_result: ForwardChainingEvaluationResult;
+  baseline_trace: TraceStep[];
+  modified_trace: TraceStep[];
+  policy?: WhatIfPolicy;
+}
+
+export interface GoalProofResult {
+  goal: string;
+  desired_value: any;
+  status: 'PROVEN' | 'DISPROVEN' | 'UNKNOWN' | 'CONFLICT';
+  entity_id: string;
+  proven_path: string[];
+  missing_subgoals: string[];
+  conflicts: string[];
+  proof_tree: any;
+  explanation: string;
+}
+
+export interface GoalProofResponse {
+  proof: GoalProofResult;
+  trace: TraceStep[];
+}
+
+export interface ConsistencyCheckResponse {
+  policy_id: string;
+  is_consistent: boolean;
+  contradictions_found: number;
+  derived_empty_clauses: string[];
+  steps_count: number;
+  execution_ms: number;
+  explanation: string;
+}
+
