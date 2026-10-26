@@ -7,7 +7,7 @@ CORS middleware, and routers for Chat, ProofLens, and Knowledge Explorer.
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import chat, knowledge, pathforge, reasoning, whatif
+from app.api import chat, knowledge, pathforge, reasoning, whatif, learning
 from app.core.config import settings
 from app.database import init_db, seed_db
 import logging
@@ -30,8 +30,8 @@ async def lifespan(app: FastAPI):
 # Create FastAPI app
 app = FastAPI(
     title="Learnify AI API",
-    description="Intelligent Conversational Student-Support Platform powered by Unit I Foundations, Unit II Search & Planning (PathForge), Unit III & IV Knowledge Representation, Symbolic Logic & WhatIf Lab, Transparent ProofLens Tracing, and SQLite Knowledge Base.",
-    version="3.0.0",
+    description="Intelligent Conversational Student-Support Platform powered by Unit I Foundations, Unit II Search & Planning (PathForge), Unit III & IV Knowledge Representation, Symbolic Logic & WhatIf Lab, Unit V Learning & Expert Systems, and ProofLens Tracing.",
+    version="4.0.0",
     lifespan=lifespan,
 )
 
@@ -50,26 +50,28 @@ app.include_router(knowledge.router, prefix="/api/knowledge", tags=["knowledge"]
 app.include_router(pathforge.router, prefix="/api/pathforge", tags=["pathforge"])
 app.include_router(reasoning.router, prefix="/api/reasoning", tags=["reasoning"])
 app.include_router(whatif.router, prefix="/api/whatif", tags=["whatif"])
+app.include_router(learning.router, prefix="/api", tags=["learning"])
 
 
 @app.get("/")
 async def root():
-    """Root endpoint with API overview and Phase 3 metadata"""
+    """Root endpoint with API overview and Phase 4 metadata"""
     return {
         "name": "Learnify AI",
-        "description": "AI-Powered Chatbot for Student Queries, Planning & Symbolic Reasoning",
-        "version": "3.0.0",
-        "phase": 3,
+        "description": "AI-Powered Chatbot for Student Queries, Planning, Symbolic Reasoning & Learning Systems",
+        "version": "4.0.0",
+        "phase": 4,
         "responsible_developers": {
             "Phase 1": "URK25CS1090 — Rufus Samuel R",
             "Phase 2": "URK25CS1063 — Yogith Joy J",
-            "Phase 3": "URK25CS1034 — Hiran Antony"
+            "Phase 3": "URK25CS1034 — Hiran Antony",
+            "Phase 4": "URK25CS1016 — Naveen Kumar"
         },
         "status": "operational",
         "signature_innovations": {
-            "ProofLens": "Operational (Phase 1, 2 & 3 Live Execution Tracing)",
-            "PathForge": "Operational (Phase 2 - Search Algorithms & Study Planning)",
-            "WhatIf Lab": "Operational (Phase 3 - Explainable Logic & Decision Simulator)"
+            "ProofLens": "Operational (Full Multi-Paradigm Execution & ML Tracing)",
+            "PathForge": "Operational (Search Algorithms & CSP Study Planning)",
+            "WhatIf Lab": "Operational (Explainable Logic & Academic Decision Simulator)"
         },
         "ai_capabilities": [
             "Perception & Input Normalization",
@@ -89,6 +91,11 @@ async def root():
             "Goal-Driven Diagnostic Backward Chaining",
             "Nonmonotonic Exception Reasoning & Overrides",
             "Bayesian Probabilistic Intent Estimation",
+            "Rote Learning & Verified Solution Caching",
+            "Learning by Taking Advice (Human Feedback & Knowledge Updates)",
+            "Inductive Learning (scikit-learn TF-IDF + Logistic Regression Intent Classifier)",
+            "Learning by Analogy (Case-Based Reasoning via Cosine Similarity)",
+            "Integrated Expert System Architecture",
             "Truthful Uncertainty Handling",
             "ProofLens Measured Execution Tracing"
         ]
@@ -101,7 +108,7 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "Learnify AI Backend",
-        "phase": 3,
+        "phase": 4,
         "database": "sqlite3",
         "features": {
             "chat": "active",
@@ -110,6 +117,10 @@ async def health_check():
             "pathforge": "active",
             "whatif_lab": "active",
             "symbolic_reasoning": "active",
+            "learning_engine": "active",
+            "intent_classifier": "active",
+            "rote_memory": "active",
+            "case_based_analogy": "active",
             "syllabus_tracker": "active"
         }
     }

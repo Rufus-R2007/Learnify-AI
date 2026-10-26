@@ -6,6 +6,9 @@ Uses Python's built-in sqlite3 for lightweight persistence.
 import sqlite3
 import os
 import json
+import hashlib
+import uuid
+from datetime import datetime, timezone
 from typing import List, Dict, Optional, Any
 from contextlib import contextmanager
 
@@ -117,6 +120,62 @@ def init_db():
                 context TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (source_id) REFERENCES sources(id)
+            );
+
+            -- Phase 4 (Naveen Kumar): Unit V Learning & Expert Systems
+            -- Concept 1: Rote Learning (Verified Solution Memory Cache)
+            CREATE TABLE IF NOT EXISTS verified_memory (
+                id TEXT PRIMARY KEY,
+                normalized_query TEXT NOT NULL UNIQUE,
+                query_hash TEXT NOT NULL,
+                answer_text TEXT NOT NULL,
+                concepts_json TEXT NOT NULL,
+                sources_json TEXT NOT NULL,
+                scope TEXT DEFAULT 'academic',
+                source_version TEXT DEFAULT '1.0.0',
+                hit_count INTEGER DEFAULT 1,
+                is_valid INTEGER DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                last_hit_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
+            -- Concept 2: Learning by Taking Advice (Human Feedback & Knowledge Updates)
+            CREATE TABLE IF NOT EXISTS feedback (
+                id TEXT PRIMARY KEY,
+                message_id TEXT,
+                query TEXT NOT NULL,
+                original_answer TEXT NOT NULL,
+                feedback_type TEXT NOT NULL,
+                comment TEXT,
+                suggested_correction TEXT,
+                target_knowledge_id TEXT,
+                status TEXT DEFAULT 'PENDING',
+                reviewer_notes TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                reviewed_at TIMESTAMP
+            );
+
+            CREATE TABLE IF NOT EXISTS knowledge_history (
+                id TEXT PRIMARY KEY,
+                knowledge_id TEXT NOT NULL,
+                previous_content TEXT NOT NULL,
+                new_content TEXT NOT NULL,
+                feedback_id TEXT,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (knowledge_id) REFERENCES knowledge(id)
+            );
+
+            -- Concept 4: Learning by Analogy (Solved Case Base for Case-Based Guidance)
+            CREATE TABLE IF NOT EXISTS case_base (
+                id TEXT PRIMARY KEY,
+                topic_id TEXT NOT NULL,
+                unit INTEGER NOT NULL,
+                category TEXT NOT NULL,
+                question TEXT NOT NULL,
+                solution_preview TEXT NOT NULL,
+                knowledge_id TEXT,
+                keywords TEXT,
+                FOREIGN KEY (topic_id) REFERENCES topics(id)
             );
         """)
 
@@ -513,6 +572,38 @@ def seed_db():
             verified_facts,
         )
 
+        # --- Phase 4: Learning by Analogy Solved Case Base (Naveen Kumar) ---
+        cases = [
+            ("case-ai-def", "topic-ai-foundations", 1, "AI Foundations", "What is artificial intelligence?", "Artificial intelligence is the study of agents that receive percepts from the environment and perform rational actions.", "k-ai-def", "ai definition artificial intelligence turing rational"),
+            ("case-turing-test", "topic-ai-foundations", 1, "AI Foundations", "What is the Turing test?", "The Turing Test assesses whether an AI program can converse indistinguishably from an educated human evaluator.", "k-ai-def", "turing test alan turing imitation game acting humanly"),
+            ("case-agent-types", "topic-intelligent-agents", 1, "Intelligent Agents", "What are the types of intelligent agents?", "The four fundamental architectures are Simple Reflex, Model-Based Reflex, Goal-Based, and Utility-Based agents.", "k-agent-types", "agent types reflex model goal utility rational"),
+            ("case-rationality", "topic-intelligent-agents", 1, "Intelligent Agents", "What constitutes rationality in an agent?", "A rational agent selects actions that maximize its expected performance measure given its percept history.", "k-agent-types", "rational rationality performance measure environment"),
+            ("case-problem-formulation", "topic-problem-solving", 1, "Problem Solving", "How is a search problem defined in state space?", "A search problem formally consists of an initial state, possible actions, transition model, goal test, and path cost.", "k-state-spaces", "problem formulation state space initial state goal test path cost"),
+            ("case-bfs-properties", "topic-search-bfs-dfs", 2, "Search & Planning", "What is breadth-first search?", "BFS systematically expands the shallowest unexpanded node using a FIFO queue; it guarantees optimal solutions for uniform costs.", "k-bfs-def", "bfs breadth first search queue fifo shortest path complete"),
+            ("case-dfs-properties", "topic-search-bfs-dfs", 2, "Search & Planning", "When should depth-first search be used?", "DFS uses a LIFO stack requiring only O(bm) linear space, suitable when space is constrained and solutions are deep.", "k-dfs-def", "dfs depth first search stack lifo linear space memory"),
+            ("case-bidi-search", "topic-bidirectional-search", 2, "Search & Planning", "How does bidirectional search work?", "Bidirectional search explores simultaneously forward from the initial state and backward from the goal, meeting in the middle.", "k-bidirectional-def", "bidirectional search forward backward meeting frontier"),
+            ("case-best-first", "topic-heuristic-search", 2, "Search & Planning", "How does Greedy Best-First Search operate?", "Greedy Best-First search expands the node that appears closest to the goal according to the heuristic function h(n).", "k-heuristic-def", "greedy best first search heuristic h(n) informed search"),
+            ("case-csp-backtracking", "topic-csp-search", 2, "Search & Planning", "What is constraint satisfaction problem backtracking?", "CSP backtracking assigns variables incrementally, immediately pruning branches that violate constraints.", "k-csp-def", "csp constraint satisfaction backtracking forward checking mrv"),
+            ("case-prop-logic", "topic-prop-logic", 3, "Logic & Knowledge", "What is propositional logic in AI?", "Propositional logic represents declarative assertions with Boolean connectives without quantifiers or variables.", "k-prop-logic", "propositional logic boolean connectives truth tables valid satisfiable"),
+            ("case-predicate-logic", "topic-predicate-logic", 3, "Logic & Knowledge", "How does first-order predicate logic extend propositional logic?", "Predicate logic incorporates objects, relations, functions, and existential and universal quantifiers.", "k-predicate-logic", "predicate logic first order fol quantifiers variables objects"),
+            ("case-unification", "topic-predicate-logic", 3, "Logic & Knowledge", "What is unification in predicate logic?", "Unification finds a most general substitution theta that makes two distinct first-order expressions identical.", "k-predicate-logic", "unification substitution mgu resolution first order"),
+            ("case-resolution-refutation", "topic-prop-logic", 3, "Logic & Knowledge", "How does resolution refutation prove statements?", "Resolution refutation negates the goal conjecture, translates formulas to CNF, and derives an empty clause contradiction.", "k-prop-logic", "resolution refutation cnf conjunctive normal form contradiction"),
+            ("case-forward-chaining", "topic-forward-backward", 4, "Inference & Rules", "What is data-driven forward chaining?", "Forward chaining applies Modus Ponens to known facts and rules, deriving all reachable conclusions until the goal is found.", "k-forward-chaining", "forward chaining data driven modus ponens deduction facts"),
+            ("case-backward-chaining", "topic-forward-backward", 4, "Inference & Rules", "What is goal-driven backward chaining?", "Backward chaining starts with a query hypothesis and works backward verifying whether premises are supported by facts.", "k-backward-chaining", "backward chaining goal driven diagnosis hypothesis premises"),
+            ("case-bayesian-reasoning", "topic-bayesian", 4, "Probabilistic Reasoning", "How is Bayes' rule applied in uncertain reasoning?", "Bayes' rule updates prior probability P(H) to posterior P(H|E) using likelihood P(E|H) and evidence probability.", "k-bayesian-def", "bayesian reasoning bayes rule prior posterior likelihood conditional probability"),
+            ("case-nonmonotonic-reasoning", "topic-forward-backward", 4, "Inference & Rules", "What is nonmonotonic reasoning in expert systems?", "Nonmonotonic reasoning permits conclusions to be retracted when new contradictory evidence or exceptions are introduced.", "k-forward-chaining", "nonmonotonic reasoning default logic exceptions retraction belief revision"),
+            ("case-expert-systems-arch", "topic-expert-systems", 5, "Applied AI Systems", "What is the architecture of an expert system?", "An expert system integrates a Knowledge Base, Inference Engine, Query Interpreter, Explanation Facility, and UI.", "k-expert-systems", "expert system architecture inference engine knowledge base explanation facility"),
+            ("case-rote-learning", "topic-machine-learning", 5, "Learning Systems", "What is rote learning in artificial intelligence?", "Rote learning caches and reuses previously computed and verified solutions for identical or normalized queries.", "k-machine-learning", "rote learning caching memoization reuse verified solution memory"),
+            ("case-advice-learning", "topic-machine-learning", 5, "Learning Systems", "How does learning by taking advice work?", "The agent receives human guidance or corrections, verifies them through an approval workflow, and updates knowledge.", "k-machine-learning", "learning by advice human feedback correction approval knowledge update"),
+            ("case-inductive-learning", "topic-machine-learning", 5, "Learning Systems", "What is inductive learning from examples?", "Inductive learning discovers general decision functions or classifier boundaries from labeled training instances.", "k-machine-learning", "inductive learning machine learning classification tfidf logistic regression"),
+            ("case-analogy-learning", "topic-machine-learning", 5, "Learning Systems", "What is learning by analogy in AI?", "Learning by analogy maps a novel query to past similar solved cases via cosine similarity, retrieving precedent solutions.", "k-machine-learning", "learning by analogy case based reasoning similarity precedent solved cases"),
+            ("case-neural-networks", "topic-neural-networks", 5, "Machine Learning", "How do neural networks learn representations?", "Neural networks adjust connection weights via backpropagation gradient descent to minimize output loss over training data.", "k-neural-networks", "neural networks deep learning backpropagation gradient descent weights"),
+        ]
+        conn.executemany(
+            "INSERT OR REPLACE INTO case_base (id, topic_id, unit, category, question, solution_preview, knowledge_id, keywords) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            cases,
+        )
+
 
 def get_all_knowledge() -> List[Dict[str, Any]]:
     """Retrieve all knowledge records with source info."""
@@ -785,5 +876,357 @@ def get_verified_facts_for_entity(entity_id: str) -> List[Dict[str, Any]]:
             f["value"] = json.loads(f["value_json"]) if f["value_json"] else None
             facts.append(f)
         return facts
+
+
+# ============================================================================
+# Phase 4: Unit V Learning & Expert Systems (Naveen Kumar - URK25CS1016)
+# ============================================================================
+
+# --- Concept 1: Rote Learning (Verified Solution Memory Cache) ---
+
+def get_verified_memory(normalized_query: str) -> Optional[Dict[str, Any]]:
+    """
+    Rote Learning: Retrieve cached verified solution for an identical or
+    normalized query if valid and safe to reuse.
+    Updates hit count and timestamp.
+    """
+    clean_query = normalized_query.strip().lower()
+    q_hash = hashlib.sha256(clean_query.encode('utf-8')).hexdigest()
+
+    with get_db() as conn:
+        row = conn.execute("""
+            SELECT id, normalized_query, query_hash, answer_text, concepts_json,
+                   sources_json, scope, source_version, hit_count, is_valid,
+                   created_at, last_hit_at
+            FROM verified_memory
+            WHERE (normalized_query = ? OR query_hash = ?) AND is_valid = 1
+        """, (clean_query, q_hash)).fetchone()
+
+        if not row:
+            return None
+
+        mem = dict(row)
+        mem["concepts"] = json.loads(mem["concepts_json"])
+        mem["sources"] = json.loads(mem["sources_json"])
+
+        # Update hit count and last_hit_at
+        conn.execute("""
+            UPDATE verified_memory
+            SET hit_count = hit_count + 1,
+                last_hit_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        """, (mem["id"],))
+
+        return mem
+
+
+def store_verified_memory(
+    normalized_query: str,
+    answer_text: str,
+    concepts: List[str],
+    sources: List[Dict[str, Any]],
+    scope: str = "academic",
+    source_version: str = "1.0.0"
+) -> Optional[str]:
+    """
+    Rote Learning: Store a verified response into SQLite memory cache.
+    Safety Guard: Only universal/academic explanations are stored.
+    Individualized, private, or rule-dependent answers are NEVER cached.
+    """
+    clean_query = normalized_query.strip().lower()
+
+    # Reject caching individualized decisions or institutional private queries
+    unsafe_keywords = ["my attendance", "my gpa", "my marks", "my fee", "student_01", "hypothetical"]
+    if any(k in clean_query for k in unsafe_keywords) or scope not in ("academic", "syllabus", "general"):
+        return None
+
+    mem_id = f"mem-{uuid.uuid4().hex[:10]}"
+    q_hash = hashlib.sha256(clean_query.encode('utf-8')).hexdigest()
+    concepts_json = json.dumps(concepts)
+    sources_json = json.dumps(sources)
+
+    with get_db() as conn:
+        conn.execute("""
+            INSERT INTO verified_memory
+                (id, normalized_query, query_hash, answer_text, concepts_json, sources_json, scope, source_version, hit_count, is_valid)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, 1)
+            ON CONFLICT(normalized_query) DO UPDATE SET
+                answer_text = excluded.answer_text,
+                concepts_json = excluded.concepts_json,
+                sources_json = excluded.sources_json,
+                source_version = excluded.source_version,
+                is_valid = 1,
+                hit_count = hit_count + 1,
+                last_hit_at = CURRENT_TIMESTAMP
+        """, (mem_id, clean_query, q_hash, answer_text, concepts_json, sources_json, scope, source_version))
+
+    return mem_id
+
+
+def invalidate_verified_memory(scope: Optional[str] = None, source_id: Optional[str] = None) -> int:
+    """
+    Rote Learning Invalidation: Mark affected memory entries as invalid
+    when underlying knowledge records or policies change.
+    """
+    with get_db() as conn:
+        if scope:
+            cursor = conn.execute("UPDATE verified_memory SET is_valid = 0 WHERE scope = ?", (scope,))
+        elif source_id:
+            cursor = conn.execute("UPDATE verified_memory SET is_valid = 0 WHERE sources_json LIKE ?", (f"%{source_id}%",))
+        else:
+            cursor = conn.execute("UPDATE verified_memory SET is_valid = 0")
+        return cursor.rowcount
+
+
+def get_memory_stats() -> Dict[str, Any]:
+    """Retrieve verified memory operational statistics."""
+    with get_db() as conn:
+        total = conn.execute("SELECT COUNT(*) FROM verified_memory").fetchone()[0]
+        valid = conn.execute("SELECT COUNT(*) FROM verified_memory WHERE is_valid = 1").fetchone()[0]
+        total_hits = conn.execute("SELECT SUM(hit_count) FROM verified_memory WHERE is_valid = 1").fetchone()[0] or 0
+        return {
+            "total_entries": total,
+            "valid_entries": valid,
+            "invalidated_entries": total - valid,
+            "total_cache_hits": total_hits,
+        }
+
+
+def get_all_memory() -> List[Dict[str, Any]]:
+    """List all verified memory entries for inspection."""
+    with get_db() as conn:
+        rows = conn.execute("""
+            SELECT id, normalized_query, scope, source_version, hit_count, is_valid, created_at, last_hit_at
+            FROM verified_memory
+            ORDER BY last_hit_at DESC
+        """).fetchall()
+        return [dict(r) for r in rows]
+
+
+# --- Concept 2: Learning by Taking Advice (Human Feedback & Approval Workflow) ---
+
+def submit_feedback(
+    query: str,
+    original_answer: str,
+    feedback_type: str,
+    comment: Optional[str] = None,
+    suggested_correction: Optional[str] = None,
+    target_knowledge_id: Optional[str] = None,
+    message_id: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Submit human feedback / suggested correction.
+    Status defaults to 'PENDING'. Must be approved by a reviewer before
+    modifying authoritative knowledge.
+    """
+    fid = f"fb-{uuid.uuid4().hex[:10]}"
+    clean_fb_type = feedback_type.lower()
+    if clean_fb_type not in ("helpful", "not_helpful"):
+        clean_fb_type = "helpful"
+
+    with get_db() as conn:
+        conn.execute("""
+            INSERT INTO feedback
+                (id, message_id, query, original_answer, feedback_type, comment, suggested_correction, target_knowledge_id, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'PENDING')
+        """, (fid, message_id, query, original_answer, clean_fb_type, comment, suggested_correction, target_knowledge_id))
+
+    return {
+        "id": fid,
+        "status": "PENDING",
+        "message": "Feedback submitted successfully. Suggestions are reviewed before updating knowledge."
+    }
+
+
+def get_all_feedback(status: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Retrieve all student feedback submissions, optionally filtered by status."""
+    with get_db() as conn:
+        if status:
+            rows = conn.execute("""
+                SELECT id, message_id, query, original_answer, feedback_type, comment,
+                       suggested_correction, target_knowledge_id, status, reviewer_notes,
+                       created_at, reviewed_at
+                FROM feedback
+                WHERE status = ?
+                ORDER BY created_at DESC
+            """, (status.upper(),)).fetchall()
+        else:
+            rows = conn.execute("""
+                SELECT id, message_id, query, original_answer, feedback_type, comment,
+                       suggested_correction, target_knowledge_id, status, reviewer_notes,
+                       created_at, reviewed_at
+                FROM feedback
+                ORDER BY created_at DESC
+            """).fetchall()
+        return [dict(r) for r in rows]
+
+
+def get_feedback_by_id(feedback_id: str) -> Optional[Dict[str, Any]]:
+    """Retrieve single feedback record by ID."""
+    with get_db() as conn:
+        row = conn.execute("""
+            SELECT id, message_id, query, original_answer, feedback_type, comment,
+                   suggested_correction, target_knowledge_id, status, reviewer_notes,
+                   created_at, reviewed_at
+            FROM feedback
+            WHERE id = ?
+        """, (feedback_id,)).fetchone()
+        return dict(row) if row else None
+
+
+def review_feedback(
+    feedback_id: str,
+    decision: str,
+    reviewer_notes: str = "",
+    update_knowledge: bool = True
+) -> Dict[str, Any]:
+    """
+    Learning by Taking Advice Reviewer Workflow:
+    Approve or reject submitted feedback.
+    If APPROVED and a suggested_correction exists:
+      1. Updates the target knowledge record or matches via query.
+      2. Records full update provenance in knowledge_history.
+      3. Invalidates affected verified_memory entries so subsequent queries
+         use the freshly verified knowledge.
+    """
+    decision_clean = decision.upper()
+    if decision_clean not in ("APPROVED", "REJECTED"):
+        raise ValueError(f"Invalid decision: {decision}. Must be 'APPROVED' or 'REJECTED'.")
+
+    with get_db() as conn:
+        fb = conn.execute("SELECT * FROM feedback WHERE id = ?", (feedback_id,)).fetchone()
+        if not fb:
+            raise ValueError(f"Feedback with id '{feedback_id}' not found.")
+
+        fb_dict = dict(fb)
+        knowledge_updated = False
+        target_kid = fb_dict.get("target_knowledge_id")
+
+        if decision_clean == "APPROVED" and update_knowledge and fb_dict.get("suggested_correction"):
+            correction = fb_dict["suggested_correction"].strip()
+
+            # If target_knowledge_id is not specified, attempt to find best matching knowledge record
+            if not target_kid:
+                # Find matching knowledge record via query keywords
+                q_terms = [t for t in fb_dict["query"].lower().split() if len(t) > 3]
+                matches = search_knowledge(q_terms)
+                if matches:
+                    target_kid = matches[0]["id"]
+
+            if target_kid:
+                # Fetch existing content
+                existing = conn.execute("SELECT content FROM knowledge WHERE id = ?", (target_kid,)).fetchone()
+                if existing:
+                    old_content = existing["content"]
+                    # Update knowledge record with corrected content
+                    conn.execute("""
+                        UPDATE knowledge
+                        SET content = ?,
+                            created_at = CURRENT_TIMESTAMP
+                        WHERE id = ?
+                    """, (correction, target_kid))
+
+                    # Record history
+                    hist_id = f"kh-{uuid.uuid4().hex[:10]}"
+                    conn.execute("""
+                        INSERT INTO knowledge_history
+                            (id, knowledge_id, previous_content, new_content, feedback_id)
+                        VALUES (?, ?, ?, ?, ?)
+                    """, (hist_id, target_kid, old_content, correction, feedback_id))
+
+                    # Invalidate affected verified memory
+                    conn.execute("UPDATE verified_memory SET is_valid = 0 WHERE sources_json LIKE ? OR answer_text LIKE ?",
+                                 (f"%{target_kid}%", f"%{old_content[:30]}%"))
+                    knowledge_updated = True
+
+        # Update feedback status
+        conn.execute("""
+            UPDATE feedback
+            SET status = ?,
+                reviewer_notes = ?,
+                target_knowledge_id = COALESCE(target_knowledge_id, ?),
+                reviewed_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        """, (decision_clean, reviewer_notes, target_kid, feedback_id))
+
+    return {
+        "feedback_id": feedback_id,
+        "status": decision_clean,
+        "knowledge_updated": knowledge_updated,
+        "target_knowledge_id": target_kid,
+        "message": f"Feedback {decision_clean.lower()} successfully." +
+                   (" Authoritative knowledge base updated and affected memory invalidated." if knowledge_updated else "")
+    }
+
+
+def update_knowledge_content(knowledge_id: str, new_content: str, feedback_id: Optional[str] = None) -> bool:
+    """Directly update knowledge content with history tracking."""
+    with get_db() as conn:
+        existing = conn.execute("SELECT content FROM knowledge WHERE id = ?", (knowledge_id,)).fetchone()
+        if not existing:
+            return False
+
+        old_content = existing["content"]
+        conn.execute("UPDATE knowledge SET content = ? WHERE id = ?", (new_content, knowledge_id))
+
+        hist_id = f"kh-{uuid.uuid4().hex[:10]}"
+        conn.execute("""
+            INSERT INTO knowledge_history (id, knowledge_id, previous_content, new_content, feedback_id)
+            VALUES (?, ?, ?, ?, ?)
+        """, (hist_id, knowledge_id, old_content, new_content, feedback_id))
+
+        # Invalidate related memory
+        conn.execute("UPDATE verified_memory SET is_valid = 0")
+        return True
+
+
+def get_knowledge_history(knowledge_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Retrieve audit provenance history for knowledge updates."""
+    with get_db() as conn:
+        if knowledge_id:
+            rows = conn.execute("""
+                SELECT id, knowledge_id, previous_content, new_content, feedback_id, updated_at
+                FROM knowledge_history
+                WHERE knowledge_id = ?
+                ORDER BY updated_at DESC
+            """, (knowledge_id,)).fetchall()
+        else:
+            rows = conn.execute("""
+                SELECT id, knowledge_id, previous_content, new_content, feedback_id, updated_at
+                FROM knowledge_history
+                ORDER BY updated_at DESC
+            """).fetchall()
+        return [dict(r) for r in rows]
+
+
+# --- Concept 4: Learning by Analogy (Case Base Operations) ---
+
+def get_all_cases() -> List[Dict[str, Any]]:
+    """Retrieve all approved solved cases for Case-Based Analogy matching."""
+    with get_db() as conn:
+        rows = conn.execute("""
+            SELECT c.id, c.topic_id, c.unit, c.category, c.question,
+                   c.solution_preview, c.knowledge_id, c.keywords,
+                   t.name as topic_name
+            FROM case_base c
+            LEFT JOIN topics t ON c.topic_id = t.id
+            ORDER BY c.unit, c.id
+        """).fetchall()
+        return [dict(r) for r in rows]
+
+
+def get_case_by_id(case_id: str) -> Optional[Dict[str, Any]]:
+    """Retrieve a single solved case by ID."""
+    with get_db() as conn:
+        row = conn.execute("""
+            SELECT c.id, c.topic_id, c.unit, c.category, c.question,
+                   c.solution_preview, c.knowledge_id, c.keywords,
+                   t.name as topic_name
+            FROM case_base c
+            LEFT JOIN topics t ON c.topic_id = t.id
+            WHERE c.id = ?
+        """, (case_id,)).fetchone()
+        return dict(row) if row else None
+
 
 

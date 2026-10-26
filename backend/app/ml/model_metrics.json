@@ -1,0 +1,139 @@
+{
+  "model_version": "1.0.0-sklearn-tfidf-lr",
+  "model_architecture": "TF-IDF Vectorizer (ngram 1-2) + Logistic Regression (C=2.5)",
+  "random_seed": 42,
+  "train_samples": 140,
+  "test_samples": 35,
+  "total_dataset_size": 175,
+  "num_classes": 7,
+  "classes": [
+    "academic_concept",
+    "academic_rule",
+    "explanation_request",
+    "greeting",
+    "prerequisite_path",
+    "study_schedule",
+    "unsupported"
+  ],
+  "overall_accuracy": 0.8571,
+  "macro_precision": 0.8762,
+  "macro_recall": 0.8571,
+  "macro_f1": 0.8549,
+  "confusion_matrix": [
+    [
+      4,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0
+    ],
+    [
+      0,
+      4,
+      1,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      5,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      5,
+      0,
+      0,
+      0
+    ],
+    [
+      1,
+      0,
+      0,
+      0,
+      4,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      5,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      1,
+      1,
+      0,
+      3
+    ]
+  ],
+  "per_class_metrics": {
+    "academic_concept": {
+      "display_name": "Academic Concept Explanation",
+      "precision": 0.8,
+      "recall": 0.8,
+      "f1_score": 0.8,
+      "test_support": 5
+    },
+    "academic_rule": {
+      "display_name": "Academic Rule & Decision Evaluation",
+      "precision": 1.0,
+      "recall": 0.8,
+      "f1_score": 0.8889,
+      "test_support": 5
+    },
+    "explanation_request": {
+      "display_name": "Logical Explanation & Justification",
+      "precision": 0.8333,
+      "recall": 1.0,
+      "f1_score": 0.9091,
+      "test_support": 5
+    },
+    "greeting": {
+      "display_name": "Conversational Greeting",
+      "precision": 0.8333,
+      "recall": 1.0,
+      "f1_score": 0.9091,
+      "test_support": 5
+    },
+    "prerequisite_path": {
+      "display_name": "Prerequisite & Learning Path Planning",
+      "precision": 0.6667,
+      "recall": 0.8,
+      "f1_score": 0.7273,
+      "test_support": 5
+    },
+    "study_schedule": {
+      "display_name": "Study Schedule & Timetable Planning",
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "test_support": 5
+    },
+    "unsupported": {
+      "display_name": "Out-of-Domain / Unsupported Request",
+      "precision": 1.0,
+      "recall": 0.6,
+      "f1_score": 0.75,
+      "test_support": 5
+    }
+  },
+  "held_out_evaluated": true
+}

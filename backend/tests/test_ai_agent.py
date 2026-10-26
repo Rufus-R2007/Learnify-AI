@@ -51,7 +51,7 @@ def test_health_endpoint(client):
     data = response.json()
     assert data["status"] == "healthy"
     assert data["service"] == "Learnify AI Backend"
-    assert data["phase"] in (1, 2, 3)
+    assert data["phase"] in (1, 2, 3, 4)
 
 
 def test_root_endpoint(client):
@@ -59,7 +59,7 @@ def test_root_endpoint(client):
     assert response.status_code == 200
     data = response.json()
     assert data["name"] == "Learnify AI"
-    assert data["phase"] in (1, 2, 3)
+    assert data["phase"] in (1, 2, 3, 4)
 
 
 # -------------------------------------------------------------
@@ -224,13 +224,16 @@ def test_prooflens_trace_integrity(client):
     stages = [t["stage"] for t in traces]
     assert "Query Analysis" in stages
     assert "Goal Identification" in stages
-    assert "Knowledge Retrieval" in stages
+    assert "Knowledge Retrieval" in stages or "Verified Memory Retrieval (Rote Learning)" in stages
 
     for step in traces:
         assert step["id"].startswith("step-")
         assert step["method"] is not None and len(step["method"]) > 0
         assert step["duration_ms"] >= 0.0
-        assert step["execution_type"] in ["reflex", "model_based", "goal_based", "retrieval", "verification", "assembly", "fallback"]
+        assert step["execution_type"] in [
+            "reflex", "model_based", "goal_based", "retrieval", "verification",
+            "assembly", "fallback", "inductive_learning", "rote_learning", "analogy", "expert_system"
+        ]
 
 
 # -------------------------------------------------------------
@@ -315,9 +318,9 @@ def test_syllabus_concepts_api(client):
     assert all(c["status"] == "Implemented and tested" for c in unit3["concepts"])
     unit4 = data["units"][3]
     assert all(c["status"] == "Implemented and tested" for c in unit4["concepts"])
-    # Future unit (Unit V) must remain Planned for upcoming Phase 4
+    # In Phase 4, all units (including Unit V) are implemented and tested
     unit5 = data["units"][4]
-    assert all(c["status"] == "Planned" for c in unit5["concepts"])
+    assert all(c["status"] == "Implemented and tested" for c in unit5["concepts"])
 
 
 def test_problem_solving_representation(client):

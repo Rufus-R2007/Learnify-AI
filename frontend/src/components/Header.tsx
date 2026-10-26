@@ -9,6 +9,7 @@ interface HeaderProps {
   onNewChat: () => void;
   onOpenPathForge?: () => void;
   onOpenWhatIf?: () => void;
+  onOpenLearning?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -20,6 +21,7 @@ export const Header: React.FC<HeaderProps> = ({
   onNewChat,
   onOpenPathForge,
   onOpenWhatIf,
+  onOpenLearning,
 }) => {
   return (
     <header className="h-14 border-b border-slate-200/80 bg-white/95 backdrop-blur-xs px-4 flex items-center justify-between z-10 shrink-0">
@@ -35,18 +37,28 @@ export const Header: React.FC<HeaderProps> = ({
 
         <div className="flex items-center space-x-2">
           <span className="text-sm font-bold text-slate-900 tracking-tight">Learnify AI</span>
-          <span className="hidden sm:inline-block px-2 py-0.5 rounded text-[10px] font-semibold bg-teal-50 text-teal-800 border border-teal-200">
-            Phase 3: Logic & Reasoning
+          <span className="hidden sm:inline-block px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-50 text-purple-800 border border-purple-200">
+            Phase 4: ML &amp; Learning
           </span>
         </div>
       </div>
 
       {/* Right: Quick Actions & ProofLens Toggle */}
       <div className="flex items-center space-x-2">
+        {onOpenLearning && (
+          <button
+            onClick={onOpenLearning}
+            className="hidden sm:inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-purple-800 bg-purple-50 hover:bg-purple-100 border border-purple-200/70 transition-colors"
+          >
+            <FlaskConical className="w-3.5 h-3.5 text-purple-600" />
+            <span>Learning Lab</span>
+          </button>
+        )}
+
         {onOpenWhatIf && (
           <button
             onClick={onOpenWhatIf}
-            className="hidden sm:inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-200/70 transition-colors"
+            className="hidden md:inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-200/70 transition-colors"
           >
             <FlaskConical className="w-3.5 h-3.5 text-teal-600" />
             <span>WhatIf Lab</span>
@@ -56,7 +68,7 @@ export const Header: React.FC<HeaderProps> = ({
         {onOpenPathForge && (
           <button
             onClick={onOpenPathForge}
-            className="hidden sm:inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/60 transition-colors"
+            className="hidden lg:inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/60 transition-colors"
           >
             <GitBranch className="w-3.5 h-3.5 text-indigo-600" />
             <span>PathForge</span>

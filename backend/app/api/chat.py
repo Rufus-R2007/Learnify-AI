@@ -308,50 +308,50 @@ async def get_ai_concepts() -> ConceptsResponse:
             concepts=[
                 SyllabusConceptItem(
                     unit="Unit V",
-                    concept="Expert System Architecture & Shells",
-                    use_case="End-to-end academic advisor expert system shell",
+                    concept="Rote Learning & Verified Solution Caching",
+                    use_case="Lightweight SQLite verified-answer memory system with hit tracking and cache invalidation",
                     phase=4,
-                    status="Planned",
-                    source_reference="backend/app/core/interfaces.py::RuleEngine",
-                    test_reference="tests/phase4/test_expert_system.py (planned)"
+                    status="Implemented and tested",
+                    source_reference="backend/app/database.py::get_verified_memory, store_verified_memory",
+                    test_reference="backend/tests/test_learning_and_expert.py::test_rote_learning_cache_hit_and_miss"
                 ),
                 SyllabusConceptItem(
                     unit="Unit V",
-                    concept="Supervised Learning (Classification & Regression)",
-                    use_case="Intent classification and query difficulty scoring",
+                    concept="Learning by Taking Advice (Human Feedback & Review)",
+                    use_case="Student correction submission, reviewer approval workflow, authoritative knowledge update, and audit history",
                     phase=4,
-                    status="Planned",
-                    source_reference="backend/app/core/interfaces.py::LearningEngine",
-                    test_reference="tests/phase4/test_supervised.py (planned)"
+                    status="Implemented and tested",
+                    source_reference="backend/app/database.py::review_feedback, backend/app/api/learning.py",
+                    test_reference="backend/tests/test_learning_and_expert.py::test_learning_by_taking_advice_approval_workflow"
                 ),
                 SyllabusConceptItem(
                     unit="Unit V",
-                    concept="Uncertainty Handling (Bayesian Reasoning & Certainty Factors)",
-                    use_case="Probabilistic student success prediction in WhatIf Lab",
+                    concept="Learning from Examples / Inductive Learning",
+                    use_case="scikit-learn TF-IDF Vectorizer + Logistic Regression intent classifier trained on labeled student queries",
                     phase=4,
-                    status="Planned",
-                    source_reference="backend/app/core/interfaces.py::LearningEngine",
-                    test_reference="tests/phase4/test_bayesian.py (planned)"
+                    status="Implemented and tested",
+                    source_reference="backend/app/ml/intent_classifier.py::IntentClassifier",
+                    test_reference="backend/tests/test_learning_and_expert.py::test_inductive_learning_classifier_accuracy"
                 ),
                 SyllabusConceptItem(
                     unit="Unit V",
-                    concept="Decision Trees & Information Gain",
-                    use_case="Interpretable course recommendation trees",
+                    concept="Learning by Analogy / Case-Based Reasoning",
+                    use_case="TF-IDF cosine similarity matching against solved question repository with policy safeguard guardrails",
                     phase=4,
-                    status="Planned",
-                    source_reference="backend/app/core/interfaces.py::LearningEngine",
-                    test_reference="tests/phase4/test_decision_trees.py (planned)"
+                    status="Implemented and tested",
+                    source_reference="backend/app/services/analogy_engine.py::AnalogyEngine",
+                    test_reference="backend/tests/test_learning_and_expert.py::test_analogy_case_retrieval_and_safeguards"
                 ),
                 SyllabusConceptItem(
                     unit="Unit V",
-                    concept="System Evaluation & Performance Metrics",
-                    use_case="Automated precision/recall evaluation on student query benchmarks",
+                    concept="Expert System Architecture & Multi-Paradigm Shell",
+                    use_case="Unified intelligent architecture integrating Knowledge Base, Inference Engine, Search, Learning, and ProofLens",
                     phase=4,
-                    status="Planned",
-                    source_reference="backend/app/core/interfaces.py::LearningEngine",
-                    test_reference="tests/phase4/test_evaluation.py (planned)"
+                    status="Implemented and tested",
+                    source_reference="backend/app/services/agent.py::IntelligentAgent",
+                    test_reference="backend/tests/test_learning_and_expert.py::test_expert_system_end_to_end_pipeline"
                 ),
             ]
         ),
     ]
-    return ConceptsResponse(units=units_data, phase_focus=2)
+    return ConceptsResponse(units=units_data, phase_focus=4)

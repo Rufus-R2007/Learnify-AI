@@ -156,6 +156,40 @@ export const ProofLensPanel: React.FC<ProofLensPanelProps> = ({ activeMessage, o
 
       {/* Scrollable Trace Content */}
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+        {/* Phase 4 Learning Intelligence Banner if present */}
+        {(activeMessage.mlIntent || activeMessage.roteMemoryHit) && (
+          <div className="p-3 bg-purple-50/70 border border-purple-200/80 rounded-xl text-xs space-y-1">
+            <div className="flex items-center justify-between text-purple-900 font-bold">
+              <span className="flex items-center space-x-1">
+                <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+                <span>Unit V Learning Engine Audit</span>
+              </span>
+              <span className="text-[10px] font-mono text-purple-700">
+                v{activeMessage.mlModelVersion || '1.0.0-phase4'}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 pt-1 text-[11px]">
+              <div>
+                <span className="text-slate-500 block text-[10px]">Inductive ML Intent:</span>
+                <span className="font-semibold text-slate-800">
+                  {activeMessage.mlIntent || 'General Concept'} (
+                  {Math.round((activeMessage.mlConfidence || 0) * 100)}%)
+                </span>
+              </div>
+              <div>
+                <span className="text-slate-500 block text-[10px]">Rote Solution Memory:</span>
+                <span
+                  className={`font-semibold ${
+                    activeMessage.roteMemoryHit ? 'text-emerald-700' : 'text-slate-700'
+                  }`}
+                >
+                  {activeMessage.roteMemoryHit ? 'Cache HIT (<1ms)' : 'Cache Miss (Stored)'}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Missing information notice if present */}
         {activeMessage.missingInfo && (
           <div className="p-3 bg-amber-50/80 border border-amber-200/70 rounded-xl text-xs text-amber-900">
@@ -220,6 +254,28 @@ export const ProofLensPanel: React.FC<ProofLensPanelProps> = ({ activeMessage, o
                                 ? 'bg-indigo-50 text-indigo-700'
                                 : step.execution_type === 'retrieval'
                                 ? 'bg-teal-50 text-teal-700'
+                                : step.execution_type === 'search'
+                                ? 'bg-cyan-50 text-cyan-700'
+                                : step.execution_type === 'planning'
+                                ? 'bg-sky-50 text-sky-700'
+                                : step.execution_type === 'csp'
+                                ? 'bg-violet-50 text-violet-700'
+                                : step.execution_type === 'logical_deduction'
+                                ? 'bg-rose-50 text-rose-700'
+                                : step.execution_type === 'backward_chaining'
+                                ? 'bg-orange-50 text-orange-700'
+                                : step.execution_type === 'resolution'
+                                ? 'bg-red-50 text-red-700'
+                                : step.execution_type === 'unification'
+                                ? 'bg-amber-50 text-amber-700'
+                                : step.execution_type === 'rote_learning'
+                                ? 'bg-emerald-50 text-emerald-700 font-bold'
+                                : step.execution_type === 'inductive_learning'
+                                ? 'bg-purple-50 text-purple-700 font-bold'
+                                : step.execution_type === 'analogy'
+                                ? 'bg-amber-50 text-amber-700 font-bold'
+                                : step.execution_type === 'expert_system'
+                                ? 'bg-indigo-50 text-indigo-700 font-bold'
                                 : 'bg-slate-100 text-slate-600'
                             }`}
                           >

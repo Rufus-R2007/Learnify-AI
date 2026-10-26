@@ -18,6 +18,10 @@ class ExecutionType(str, Enum):
     VERIFICATION = "verification"
     ASSEMBLY = "assembly"
     FALLBACK = "fallback"
+    ROTE_LEARNING = "rote_learning"
+    INDUCTIVE_LEARNING = "inductive_learning"
+    ANALOGY = "analogy"
+    EXPERT_SYSTEM = "expert_system"
 
 
 class StepStatus(str, Enum):
@@ -87,6 +91,18 @@ class ChatRequest(BaseModel):
     )
 
 
+class RelatedCase(BaseModel):
+    """Analogous solved question retrieved through Case-Based Reasoning."""
+    id: str
+    question: str
+    solution_preview: str
+    topic_name: str
+    category: str
+    unit: int
+    similarity_score: float
+    is_individualized_warning: bool = False
+
+
 class ChatResponse(BaseModel):
     """
     Documented extensible chat response for all four phases.
@@ -102,6 +118,11 @@ class ChatResponse(BaseModel):
     status: ResponseStatus = Field(default=ResponseStatus.ANSWERED, description="Outcome status of the agent")
     suggestions: List[str] = Field(default_factory=list, description="Suggested follow-up or related questions")
     missingInfo: Optional[str] = Field(default=None, description="Explanation of what information was unavailable, if any")
+    mlIntent: Optional[str] = Field(default=None, description="Predicted student intent from ML classifier")
+    mlConfidence: Optional[float] = Field(default=None, description="Calibrated prediction probability of ML classifier")
+    mlModelVersion: Optional[str] = Field(default=None, description="Active ML intent classification model version")
+    roteMemoryHit: bool = Field(default=False, description="Whether answer was reused from verified rote memory cache")
+    relatedCases: List[RelatedCase] = Field(default_factory=list, description="Related solved questions retrieved by Analogy Engine")
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -216,4 +237,70 @@ class WhatIfCompareRequest(BaseModel):
     baseline_facts: Dict[str, Any] = Field(..., description="Original input facts")
     modified_facts: Dict[str, Any] = Field(..., description="Modified counterfactual input facts")
     entity_id: str = Field(default="student_01", description="Student identifier")
+
+
+# =========================================================================
+# Phase 4 (Naveen Kumar): Unit V Learning & Expert Systems Schemas
+# =========================================================================
+
+class FeedbackCreateRequest(BaseModel):
+    """Payload to submit student feedback or suggested correction."""
+    message_id: Optional[str] = None
+    query: str = Field(..., min_length=1, description="Original question asked")
+    original_answer: str = Field(..., description="Assistant answer being evaluated")
+    feedback_type: str = Field(..., pattern="^(helpful|not_helpful)$", description="'helpful' or 'not_helpful'")
+    comment: Optional[str] = Field(default=None, description="Optional explanation of feedback")
+    suggested_correction: Optional[str] = Field(default=None, description="Optional corrected explanation")
+    target_knowledge_id: Optional[str] = Field(default=None, description="ID of associated knowledge record if known")
+
+
+class FeedbackReviewRequest(BaseModel):
+    """Reviewer decision payload for Learning by Taking Advice."""
+    decision: str = Field(..., pattern="^(APPROVED|REJECTED)$", description="'APPROVED' or 'REJECTED'")
+    reviewer_notes: Optional[str] = Field(default="", description="Reviewer commentary on the decision")
+    update_knowledge: bool = Field(default=True, description="Whether approved correction updates knowledge base")
+
+
+class FeedbackItem(BaseModel):
+    """A feedback submission record."""
+    id: str
+    message_id: Optional[str] = None
+    query: str
+    original_answer: str
+    feedback_type: str
+    comment: Optional[str] = None
+    suggested_correction: Optional[str] = None
+    target_knowledge_id: Optional[str] = None
+    status: str
+    reviewer_notes: Optional[str] = None
+    created_at: Optional[str] = None
+    reviewed_at: Optional[str] = None
+
+
+class MemoryStatsResponse(BaseModel):
+    """Operational statistics for Rote Learning verified memory."""
+    total_entries: int
+    valid_entries: int
+    invalidated_entries: int
+    total_cache_hits: int
+
+
+class MLMetricsResponse(BaseModel):
+    """Authentic measured machine learning evaluation metrics."""
+    model_version: str
+    model_architecture: str
+    random_seed: int
+    train_samples: int
+    test_samples: int
+    total_dataset_size: int
+    num_classes: int
+    classes: List[str]
+    overall_accuracy: float
+    macro_precision: float
+    macro_recall: float
+    macro_f1: float
+    confusion_matrix: List[List[int]]
+    per_class_metrics: Dict[str, Any]
+    held_out_evaluated: bool
+
 

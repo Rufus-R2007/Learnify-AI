@@ -14,7 +14,18 @@ export type ExecutionType =
   | 'retrieval'
   | 'verification'
   | 'assembly'
-  | 'fallback';
+  | 'fallback'
+  | 'search'
+  | 'planning'
+  | 'csp'
+  | 'logical_deduction'
+  | 'backward_chaining'
+  | 'resolution'
+  | 'unification'
+  | 'rote_learning'
+  | 'inductive_learning'
+  | 'analogy'
+  | 'expert_system';
 
 export type StepStatus = 'completed' | 'skipped' | 'fallback' | 'failed';
 
@@ -31,6 +42,18 @@ export interface TraceStep {
   execution_type: ExecutionType;
 }
 
+export interface RelatedCase {
+  id: string;
+  topic_id: string;
+  topic_name: string;
+  unit: number;
+  category: string;
+  question: string;
+  solution_preview: string;
+  knowledge_id?: string | null;
+  similarity: number;
+}
+
 export interface Message {
   id: string;
   role: Role;
@@ -44,6 +67,11 @@ export interface Message {
   status?: string;
   suggestions?: string[];
   missingInfo?: string | null;
+  mlIntent?: string | null;
+  mlConfidence?: number | null;
+  mlModelVersion?: string | null;
+  roteMemoryHit?: boolean;
+  relatedCases?: RelatedCase[];
 }
 
 export interface ChatRequest {
@@ -66,6 +94,11 @@ export interface ChatResponse {
   status: 'answered' | 'greeting' | 'unsupported' | 'needs_clarification';
   suggestions: string[];
   missingInfo?: string | null;
+  mlIntent?: string | null;
+  mlConfidence?: number | null;
+  mlModelVersion?: string | null;
+  roteMemoryHit?: boolean;
+  relatedCases?: RelatedCase[];
 }
 
 export interface KnowledgeRecord {
@@ -230,7 +263,7 @@ export interface StudyScheduleResponse {
 export interface RuleConditionItem {
   predicate: string;
   operator: string;
-  expected_value: any;
+  expected_value: unknown;
   variable_name?: string;
   threshold?: number;
   weight?: number;
@@ -238,7 +271,7 @@ export interface RuleConditionItem {
 
 export interface RuleConclusionItem {
   predicate: string;
-  value: any;
+  value: unknown;
   is_intermediate?: boolean;
 }
 
@@ -262,15 +295,15 @@ export interface WhatIfPolicy {
   category: string;
   disclaimer: string;
   rules?: DeclarativeRule[];
-  baseline_preset?: Record<string, any>;
+  baseline_preset?: Record<string, unknown>;
 }
 
 export interface ForwardStepItem {
   step: number;
   rule_id: string;
   rule_name: string;
-  matched_facts: Record<string, any>;
-  derived_conclusion: Record<string, any>;
+  matched_facts: Record<string, unknown>;
+  derived_conclusion: Record<string, unknown>;
   is_exception: boolean;
   overridden_rule_id?: string | null;
 }
@@ -278,14 +311,14 @@ export interface ForwardStepItem {
 export interface ForwardChainingEvaluationResult {
   policy_id: string;
   entity_id: string;
-  final_decision: any;
+  final_decision: unknown;
   decision_status: 'SATISFIED' | 'NOT_SATISFIED' | 'INCONCLUSIVE' | 'CONFLICT' | 'OVERRIDDEN';
-  initial_facts: Record<string, any>;
-  derived_facts: Record<string, any>;
+  initial_facts: Record<string, unknown>;
+  derived_facts: Record<string, unknown>;
   activated_rules: DeclarativeRule[];
   overridden_rules: DeclarativeRule[];
-  satisfied_conditions: Array<{ rule_id: string; condition: string; actual_value: any }>;
-  unsatisfied_conditions: Array<{ rule_id: string; condition: string; actual_value: any; reason: string }>;
+  satisfied_conditions: Array<{ rule_id: string; condition: string; actual_value: unknown }>;
+  unsatisfied_conditions: Array<{ rule_id: string; condition: string; actual_value: unknown; reason: string }>;
   missing_facts: string[];
   fired_steps: ForwardStepItem[];
   explanation: string;
@@ -299,8 +332,8 @@ export interface EvaluateWhatIfResponse {
 
 export interface InputDiffItem {
   predicate: string;
-  baseline_value: any;
-  modified_value: any;
+  baseline_value: unknown;
+  modified_value: unknown;
   change_type: 'modified' | 'added' | 'removed' | 'unchanged';
 }
 
@@ -308,8 +341,8 @@ export interface CounterfactualComparisonReport {
   policy_id: string;
   entity_id: string;
   decision_changed: boolean;
-  baseline_decision: any;
-  modified_decision: any;
+  baseline_decision: unknown;
+  modified_decision: unknown;
   baseline_status: string;
   modified_status: string;
   input_diffs: InputDiffItem[];
@@ -330,13 +363,13 @@ export interface CompareWhatIfResponse {
 
 export interface GoalProofResult {
   goal: string;
-  desired_value: any;
+  desired_value: unknown;
   status: 'PROVEN' | 'DISPROVEN' | 'UNKNOWN' | 'CONFLICT';
   entity_id: string;
   proven_path: string[];
   missing_subgoals: string[];
   conflicts: string[];
-  proof_tree: any;
+  proof_tree: unknown;
   explanation: string;
 }
 
@@ -353,5 +386,86 @@ export interface ConsistencyCheckResponse {
   steps_count: number;
   execution_ms: number;
   explanation: string;
+}
+
+// =========================================================================
+// Phase 4: Machine Learning, Expert Systems & Learning Engine Types
+// =========================================================================
+
+export interface FeedbackItem {
+  id: string;
+  query: string;
+  original_answer: string;
+  feedback_type: 'helpful' | 'not_helpful';
+  suggested_correction?: string | null;
+  student_id?: string | null;
+  target_knowledge_id?: string | null;
+  message_id?: string | null;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  reviewer_notes?: string | null;
+  created_at: string;
+  reviewed_at?: string | null;
+}
+
+export interface FeedbackCreateRequest {
+  query: string;
+  original_answer: string;
+  feedback_type: 'helpful' | 'not_helpful';
+  suggested_correction?: string | null;
+  student_id?: string | null;
+  target_knowledge_id?: string | null;
+  message_id?: string | null;
+}
+
+export interface FeedbackReviewRequest {
+  decision: 'APPROVED' | 'REJECTED';
+  reviewer_notes?: string;
+  update_knowledge?: boolean;
+}
+
+export interface MLMetricsResponse {
+  model_version: string;
+  trained_at: string;
+  algorithm: string;
+  training_samples: number;
+  test_samples: number;
+  accuracy: number;
+  macro_precision: number;
+  macro_recall: number;
+  macro_f1: number;
+  classes: string[];
+  per_class_report: Record<string, { precision: number; recall: number; f1_score: number; support: number }>;
+  confusion_matrix: number[][];
+}
+
+export interface MemoryStatsResponse {
+  total_cached_queries: number;
+  valid_entries: number;
+  invalidated_entries: number;
+  total_hits: number;
+  earliest_cache: string | null;
+  latest_hit: string | null;
+}
+
+export interface MemoryItem {
+  id: string;
+  query_hash: string;
+  normalized_query: string;
+  answer_text: string;
+  sources_json?: string;
+  confidence: number;
+  hit_count: number;
+  created_at: string;
+  last_accessed_at: string;
+  is_valid: number;
+}
+
+export interface KnowledgeHistoryItem {
+  id: string;
+  knowledge_id: string;
+  previous_content: string;
+  new_content: string;
+  feedback_id?: string | null;
+  updated_at: string;
 }
 

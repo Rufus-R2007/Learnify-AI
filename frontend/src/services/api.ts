@@ -18,6 +18,14 @@ import {
   GoalProofResponse,
   ConsistencyCheckResponse,
   DeclarativeRule,
+  FeedbackItem,
+  FeedbackCreateRequest,
+  FeedbackReviewRequest,
+  MLMetricsResponse,
+  MemoryStatsResponse,
+  MemoryItem,
+  KnowledgeHistoryItem,
+  RelatedCase,
 } from '../types';
 
 // Create axios instance with base configuration
@@ -269,7 +277,7 @@ export const getWhatIfPolicies = async (): Promise<{ total: number; policies: Wh
  */
 export const evaluateWhatIfScenario = async (
   policyId: string,
-  scenarioFacts: Record<string, any>,
+  scenarioFacts: Record<string, unknown>,
   entityId: string = 'student_01'
 ): Promise<EvaluateWhatIfResponse> => {
   try {
@@ -292,8 +300,8 @@ export const evaluateWhatIfScenario = async (
  */
 export const compareWhatIfScenarios = async (
   policyId: string,
-  baselineFacts: Record<string, any>,
-  modifiedFacts: Record<string, any>,
+  baselineFacts: Record<string, unknown>,
+  modifiedFacts: Record<string, unknown>,
   entityId: string = 'student_01'
 ): Promise<CompareWhatIfResponse> => {
   try {
@@ -318,9 +326,9 @@ export const compareWhatIfScenarios = async (
 export const proveReasoningGoal = async (
   policyId: string,
   goalPredicate: string,
-  desiredValue: any = true,
+  desiredValue: unknown = true,
   entityId: string = 'student_01',
-  scenarioFacts?: Record<string, any>
+  scenarioFacts?: Record<string, unknown>
 ): Promise<GoalProofResponse> => {
   try {
     const response = await api.post<GoalProofResponse>('/api/reasoning/prove', {
@@ -366,6 +374,191 @@ export const getReasoningRules = async (policyId?: string): Promise<{ total: num
     return response.data;
   } catch (error) {
     console.error('Error fetching reasoning rules:', error);
+    throw error;
+  }
+};
+
+// =========================================================================
+// Phase 4: Machine Learning & Learning Engine API Functions
+// =========================================================================
+
+/**
+ * Concept 2: Submit student feedback with optional suggested correction (Learning by Taking Advice).
+ */
+export const submitFeedback = async (payload: FeedbackCreateRequest): Promise<FeedbackItem> => {
+  try {
+    const response = await api.post<FeedbackItem>('/api/learning/feedback/', payload);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.data?.detail) {
+      throw new Error(error.response.data.detail);
+    }
+    throw new Error('Failed to submit feedback');
+  }
+};
+
+/**
+ * Concept 2: Retrieve all feedback submissions (with optional status filter: PENDING, APPROVED, REJECTED).
+ */
+export const getFeedbackList = async (status?: string): Promise<FeedbackItem[]> => {
+  try {
+    const params = status ? { status } : {};
+    const response = await api.get<FeedbackItem[]>('/api/learning/feedback/', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching feedback list:', error);
+    throw error;
+  }
+};
+
+/**
+ * Concept 2: Retrieve a single feedback item by ID.
+ */
+export const getFeedbackById = async (id: string): Promise<FeedbackItem> => {
+  try {
+    const response = await api.get<FeedbackItem>(`/api/learning/feedback/${id}`);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.data?.detail) {
+      throw new Error(error.response.data.detail);
+    }
+    throw new Error(`Failed to fetch feedback ${id}`);
+  }
+};
+
+/**
+ * Concept 2: Reviewer workflow — approve or reject feedback, optionally updating knowledge base.
+ */
+export const reviewFeedback = async (
+  feedbackId: string,
+  payload: FeedbackReviewRequest
+): Promise<{ feedback_id: string; status: string; knowledge_updated: boolean; message: string }> => {
+  try {
+    const response = await api.post(`/api/learning/feedback/${feedbackId}/review`, payload);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.data?.detail) {
+      throw new Error(error.response.data.detail);
+    }
+    throw new Error('Failed to review feedback');
+  }
+};
+
+/**
+ * Concept 2: Retrieve knowledge modification history audit trail.
+ */
+export const getKnowledgeHistory = async (knowledgeId?: string): Promise<KnowledgeHistoryItem[]> => {
+  try {
+    const params = knowledgeId ? { knowledge_id: knowledgeId } : {};
+    const response = await api.get<KnowledgeHistoryItem[]>('/api/learning/knowledge-history', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching knowledge history:', error);
+    throw error;
+  }
+};
+
+/**
+ * Concept 1: Retrieve Rote Learning verified memory cache statistics.
+ */
+export const getMemoryStats = async (): Promise<MemoryStatsResponse> => {
+  try {
+    const response = await api.get<MemoryStatsResponse>('/api/learning/memory/stats');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching memory stats:', error);
+    throw error;
+  }
+};
+
+/**
+ * Concept 1: Retrieve cached memory entries for inspection.
+ */
+export const getMemoryItems = async (limit: number = 50): Promise<MemoryItem[]> => {
+  try {
+    const response = await api.get<MemoryItem[]>('/api/learning/memory/items', { params: { limit } });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching memory items:', error);
+    throw error;
+  }
+};
+
+/**
+ * Concept 1: Invalidate verified memory entries (cache clearance).
+ */
+export const invalidateMemory = async (queryPattern?: string): Promise<{ invalidated: number; message: string }> => {
+  try {
+    const params = queryPattern ? { query_pattern: queryPattern } : {};
+    const response = await api.post('/api/learning/memory/invalidate', null, { params });
+    return response.data;
+  } catch (error) {
+    console.error('Error invalidating memory:', error);
+    throw error;
+  }
+};
+
+/**
+ * Concept 3: Retrieve Inductive Learning scikit-learn classifier evaluation metrics.
+ */
+export const getMLMetrics = async (): Promise<MLMetricsResponse> => {
+  try {
+    const response = await api.get<MLMetricsResponse>('/api/learning/ml-metrics');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching ML metrics:', error);
+    throw error;
+  }
+};
+
+/**
+ * Concept 3: Predict student query intent via ML model.
+ */
+export const predictIntent = async (
+  query: string
+): Promise<{
+  query: string;
+  predicted_category: string;
+  confidence: number;
+  is_uncertain: boolean;
+  class_probabilities: Record<string, number>;
+  model_version: string;
+}> => {
+  try {
+    const response = await api.post('/api/learning/predict-intent', { query });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.data?.detail) {
+      throw new Error(error.response.data.detail);
+    }
+    throw new Error('Failed to predict intent');
+  }
+};
+
+/**
+ * Concept 4: Retrieve related solved cases via analogy matching.
+ */
+export const getCurriculumAnalogies = async (query: string, maxCases: number = 3): Promise<RelatedCase[]> => {
+  try {
+    const response = await api.get<{ matches: RelatedCase[] }>('/api/learning/analogies', {
+      params: { query, max_cases: maxCases },
+    });
+    return response.data.matches;
+  } catch (error) {
+    console.error('Error fetching analogies:', error);
+    return [];
+  }
+};
+
+/**
+ * Concept 5: Retrieve unified expert system architectural component definitions.
+ */
+export const getExpertSystemArchitecture = async (): Promise<Record<string, unknown>> => {
+  try {
+    const response = await api.get('/api/learning/expert-system-architecture');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching expert system architecture:', error);
     throw error;
   }
 };

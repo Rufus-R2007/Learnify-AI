@@ -10,7 +10,7 @@ import {
   X
 } from 'lucide-react';
 
-export type ActiveView = 'chat' | 'knowledge' | 'pathforge' | 'whatif' | 'syllabus';
+export type ActiveView = 'chat' | 'knowledge' | 'pathforge' | 'whatif' | 'syllabus' | 'learning';
 
 interface SidebarProps {
   activeView: ActiveView;
@@ -53,8 +53,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div>
               <div className="flex items-center space-x-1.5">
                 <h1 className="text-base font-bold text-slate-900 tracking-tight">Learnify AI</h1>
-                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-teal-50 text-teal-800 border border-teal-200">
-                  Phase 3 Live
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-50 text-purple-800 border border-purple-200">
+                  Phase 4 Live
                 </span>
               </div>
               <p className="text-[11px] text-slate-500">Student AI Assistant</p>
@@ -141,7 +141,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="flex-1 text-left flex items-center justify-between">
               <span>WhatIf Lab</span>
               <span className="text-[9px] px-1.5 py-0.5 rounded bg-teal-100 text-teal-800 font-bold">
-                Phase 3 Live
+                Phase 3
+              </span>
+            </div>
+          </button>
+
+          <button
+            onClick={() => {
+              onSelectView('learning');
+              onClose();
+            }}
+            className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-colors ${
+              activeView === 'learning'
+                ? 'bg-purple-50 text-purple-800 font-semibold'
+                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+            }`}
+          >
+            <Brain className="w-4 h-4 text-purple-600" />
+            <div className="flex-1 text-left flex items-center justify-between">
+              <span>Learning Lab</span>
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 font-bold">
+                Phase 4 Live
               </span>
             </div>
           </button>
@@ -167,20 +187,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
 
           <div className="pt-4 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-            Upcoming Innovations
-          </div>
-
-          <div className="w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-medium text-slate-400 bg-slate-50/50">
-            <span className="w-2 h-2 rounded-full bg-slate-300" />
-            <div className="flex-1 text-left flex items-center justify-between">
-              <span>Phase 4: ML & Adaptive</span>
-              <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-600 font-semibold">
-                Planned
-              </span>
-            </div>
-          </div>
-
-          <div className="pt-4 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
             Academic Attribution
           </div>
 
@@ -199,7 +205,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="flex-1 text-left flex items-center justify-between">
               <span>Syllabus & Team</span>
               <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 font-semibold">
-                5 Units
+                5 Units Complete
               </span>
             </div>
           </button>
@@ -226,9 +232,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           </div>
 
-          {/* Responsible Developers: Phase 3, Phase 2 & Phase 1 */}
+          {/* Responsible Developers: Phase 4, Phase 3, Phase 2 & Phase 1 */}
           <div className="space-y-1.5 max-h-48 overflow-y-auto pr-0.5">
-            <div className="p-2 rounded-xl bg-white border border-teal-300 shadow-2xs">
+            <div className="p-2 rounded-xl bg-white border border-purple-300 shadow-2xs">
+              <div className="flex items-center space-x-2 mb-0.5">
+                <div className="w-5 h-5 rounded-md bg-purple-100 text-purple-800 flex items-center justify-center text-[10px] font-bold">
+                  N
+                </div>
+                <div className="min-w-0">
+                  <span className="text-xs font-bold text-slate-900 block truncate">
+                    Naveen Kumar
+                  </span>
+                  <span className="text-[10px] text-purple-700 block font-mono">
+                    URK25CS1016
+                  </span>
+                </div>
+              </div>
+              <p className="text-[10px] text-slate-500 leading-tight">
+                Phase 4 Lead: Learning Engine & Expert Systems
+              </p>
+            </div>
+
+            <div className="p-2 rounded-xl bg-white/90 border border-teal-300/80 shadow-2xs">
               <div className="flex items-center space-x-2 mb-0.5">
                 <div className="w-5 h-5 rounded-md bg-teal-100 text-teal-800 flex items-center justify-center text-[10px] font-bold">
                   H

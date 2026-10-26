@@ -47,13 +47,22 @@ export const SyllabusModal: React.FC<SyllabusModalProps> = ({ isOpen, onClose })
 
   const teamMembers = [
     {
+      regNo: 'URK25CS1016',
+      name: 'Naveen Kumar',
+      role: 'Phase 4 Lead',
+      scope: 'Unit V Learning & Expert Systems: Rote Learning Solution Cache with Latency Optimization, Human Advice Ingestion & Reviewer Approval Workflow, scikit-learn TF-IDF + Logistic Regression Inductive Intent Classification, Case-Based Reasoning by Analogy with Policy Safeguards, Unified Expert System Architecture & Final QA',
+      status: 'Completed & Tested (72 Total System Tests Passing)',
+      phase: 4,
+      isCurrent: true,
+    },
+    {
       regNo: 'URK25CS1034',
       name: 'Hiran Antony R',
       role: 'Phase 3 Lead',
       scope: 'Knowledge Representation (Atomic Facts, Predicates, Provenance, Conflict Detection), First-Order Predicate Logic & Robinson Unification, Propositional Resolution, Horn-Clause SLD-Resolution, Declarative Policies & Production Rules, Forward Chaining, Backward Diagnostic Goal Prover, Nonmonotonic Overrides, Naive Bayes Intent Routing, WhatIf Lab Academic Decision Simulator',
       status: 'Completed & Tested (21 Unit Tests Passing)',
       phase: 3,
-      isCurrent: true,
+      isCurrent: false,
     },
     {
       regNo: 'URK25CS1063',
@@ -71,15 +80,6 @@ export const SyllabusModal: React.FC<SyllabusModalProps> = ({ isOpen, onClose })
       scope: 'Foundation, Intelligent Agent Architecture, ProofLens Transparent Trace Panel, SQLite Knowledge Base & Seed Data, Full-Stack UI/UX',
       status: 'Completed & Tested (21 Unit Tests Passing)',
       phase: 1,
-      isCurrent: false,
-    },
-    {
-      regNo: 'URK25CS1016',
-      name: 'Naveen Kumar',
-      role: 'Phase 4 Lead',
-      scope: 'Machine Learning Classification, Expert System Shell, Uncertainty Reasoning (Bayesian & Certainty Factors), Quantitative Evaluation Benchmarks',
-      status: 'Planned (Upcoming Phase 4)',
-      phase: 4,
       isCurrent: false,
     },
   ];

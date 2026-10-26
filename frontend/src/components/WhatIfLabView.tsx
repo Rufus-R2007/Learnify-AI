@@ -66,7 +66,7 @@ export const WhatIfLabView: React.FC<WhatIfLabViewProps> = ({
   // Compare mode state
   const [isCompareMode, setIsCompareMode] = useState<boolean>(false);
   const [compareResult, setCompareResult] = useState<CompareWhatIfResponse | null>(null);
-  const [baselineFactsState, setBaselineFactsState] = useState<Record<string, any>>({});
+  const [baselineFactsState, setBaselineFactsState] = useState<Record<string, unknown>>({});
 
   // Right Diagnostic Panel State
   const [activeTab, setActiveTab] = useState<DiagnosticTab>('forward');
@@ -90,8 +90,8 @@ export const WhatIfLabView: React.FC<WhatIfLabViewProps> = ({
           setSelectedPolicyId(first.id);
           applyPolicyDefaults(first);
         }
-      } catch (err: any) {
-        setError(err.message || 'Failed to load WhatIf policies from backend.');
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Failed to load WhatIf policies from backend.');
       } finally {
         setLoadingPolicies(false);
       }
@@ -107,24 +107,24 @@ export const WhatIfLabView: React.FC<WhatIfLabViewProps> = ({
   const applyPolicyDefaults = (policy: WhatIfPolicy) => {
     const preset = policy.baseline_preset || {};
     if (policy.id === 'policy-exam-eligibility-v1') {
-      setAttendance(preset.attendance_percentage ?? 68);
-      setAssignmentCompleted(preset.assignment_completed ?? true);
+      setAttendance(typeof preset.attendance_percentage === 'number' ? preset.attendance_percentage : 68);
+      setAssignmentCompleted(typeof preset.assignment_completed === 'boolean' ? preset.assignment_completed : true);
       setApprovedExemption(false);
       setSelectedGoal('exam_eligible');
     } else if (policy.id === 'policy-exception-waiver-v1') {
-      setAttendance(preset.attendance_percentage ?? 68);
-      setAssignmentCompleted(preset.assignment_completed ?? true);
-      setApprovedExemption(preset.approved_exemption ?? false);
+      setAttendance(typeof preset.attendance_percentage === 'number' ? preset.attendance_percentage : 68);
+      setAssignmentCompleted(typeof preset.assignment_completed === 'boolean' ? preset.assignment_completed : true);
+      setApprovedExemption(typeof preset.approved_exemption === 'boolean' ? preset.approved_exemption : false);
       setSelectedGoal('exam_eligible');
     } else if (policy.id === 'policy-incomplete-info-v1') {
-      setAttendance(preset.attendance_percentage ?? 78);
-      setAssignmentCompleted(preset.assignment_completed ?? true);
+      setAttendance(typeof preset.attendance_percentage === 'number' ? preset.attendance_percentage : 78);
+      setAssignmentCompleted(typeof preset.assignment_completed === 'boolean' ? preset.assignment_completed : true);
       setIncludeLabClearance(false);
       setSelectedGoal('semester_passed');
     } else if (policy.id === 'policy-academic-honors-v1') {
-      setGpa(preset.gpa ?? 3.82);
-      setCreditsCompleted(preset.credits_completed ?? 64);
-      setDisciplinaryClearance(preset.disciplinary_clearance ?? true);
+      setGpa(typeof preset.gpa === 'number' ? preset.gpa : 3.82);
+      setCreditsCompleted(typeof preset.credits_completed === 'number' ? preset.credits_completed : 64);
+      setDisciplinaryClearance(typeof preset.disciplinary_clearance === 'boolean' ? preset.disciplinary_clearance : true);
       setSelectedGoal('academic_honors');
     }
   };
@@ -142,8 +142,8 @@ export const WhatIfLabView: React.FC<WhatIfLabViewProps> = ({
   };
 
   // Build the current fact payload based on the selected policy
-  const buildCurrentFacts = (): Record<string, any> => {
-    const facts: Record<string, any> = {};
+  const buildCurrentFacts = (): Record<string, unknown> => {
+    const facts: Record<string, unknown> = {};
     if (selectedPolicyId === 'policy-academic-honors-v1') {
       facts.gpa = gpa;
       facts.credits_completed = creditsCompleted;
@@ -186,8 +186,8 @@ export const WhatIfLabView: React.FC<WhatIfLabViewProps> = ({
         );
         setCompareResult(comp);
       }
-    } catch (err: any) {
-      setError(err.message || 'Evaluation failed.');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Evaluation failed.');
     } finally {
       setIsEvaluating(false);
     }
@@ -198,6 +198,7 @@ export const WhatIfLabView: React.FC<WhatIfLabViewProps> = ({
     if (activePolicy) {
       handleEvaluate();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPolicyId]);
 
   // Activate Compare Mode: record baseline facts and compare with modified
@@ -236,8 +237,8 @@ export const WhatIfLabView: React.FC<WhatIfLabViewProps> = ({
       );
       setProofResult(res);
       setActiveTab('backward');
-    } catch (err: any) {
-      setError(err.message || 'Backward goal diagnosis failed.');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Backward goal diagnosis failed.');
     } finally {
       setIsProving(false);
     }
@@ -252,8 +253,8 @@ export const WhatIfLabView: React.FC<WhatIfLabViewProps> = ({
       const res = await checkPolicyConsistency(selectedPolicyId);
       setConsistencyResult(res);
       setActiveTab('consistency');
-    } catch (err: any) {
-      setError(err.message || 'Consistency check failed.');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Consistency check failed.');
     } finally {
       setIsCheckingConsistency(false);
     }
