@@ -51,7 +51,7 @@ def test_health_endpoint(client):
     data = response.json()
     assert data["status"] == "healthy"
     assert data["service"] == "Learnify AI Backend"
-    assert data["phase"] == 1
+    assert data["phase"] in (1, 2)
 
 
 def test_root_endpoint(client):
@@ -59,7 +59,7 @@ def test_root_endpoint(client):
     assert response.status_code == 200
     data = response.json()
     assert data["name"] == "Learnify AI"
-    assert data["phase"] == 1
+    assert data["phase"] in (1, 2)
 
 
 # -------------------------------------------------------------
@@ -307,11 +307,13 @@ def test_syllabus_concepts_api(client):
     assert len(data["units"]) == 5
     unit1 = data["units"][0]
     assert unit1["theme"] == "Foundations of Artificial Intelligence"
-    # Unit 1 must be marked implemented
+    # Unit 1 and Unit 2 must be marked implemented
     assert all(c["status"] == "Implemented and tested" for c in unit1["concepts"])
-    # Future units must be marked Planned
     unit2 = data["units"][1]
-    assert all(c["status"] == "Planned" for c in unit2["concepts"])
+    assert all(c["status"] == "Implemented and tested" for c in unit2["concepts"])
+    # Future units (Unit III, IV, V) must remain Planned for upcoming phases
+    unit3 = data["units"][2]
+    assert all(c["status"] == "Planned" for c in unit3["concepts"])
 
 
 def test_problem_solving_representation(client):

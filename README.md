@@ -1,13 +1,13 @@
 # Learnify AI — AI-Powered Chatbot for Student Queries
 
-[![Phase 1 Complete](https://img.shields.io/badge/Phase%201-Foundation%20%26%20ProofLens-blue?style=for-the-badge)](https://github.com/Rufus-R2007/Learnify-AI)
-[![Python 3.14](https://img.shields.io/badge/Python-3.14+-green?style=flat-square&logo=python)](https://www.python.org/)
+[![Phase 2 Complete](https://img.shields.io/badge/Phase%202-Search%20Algorithms%20%26%20PathForge-indigo?style=for-the-badge)](https://github.com/Rufus-R2007/Learnify-AI)
+[![Python 3.11+](https://img.shields.io/badge/Python-3.11+-green?style=flat-square&logo=python)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-1.0.0-teal?style=flat-square&logo=fastapi)](https://fastapi.tiangolo.com/)
 [![React 18](https://img.shields.io/badge/React-18-blue?style=flat-square&logo=react)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.2-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-5.4-purple?style=flat-square&logo=vite)](https://vitejs.dev/)
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.4-cyan?style=flat-square&logo=tailwindcss)](https://tailwindcss.com/)
-[![Tests Passing](https://img.shields.io/badge/Tests-21%20Passing-brightgreen?style=flat-square)](backend/tests/)
+[![Tests Passing](https://img.shields.io/badge/Tests-39%20Passing-brightgreen?style=flat-square)](backend/tests/)
 
 > **Learnify AI** is an intelligent conversational student-support platform designed to answer academic questions using grounded knowledge representation, search algorithms, logical reasoning, and expert system techniques. Every conclusion is transparently explainable through **ProofLens**.
 
@@ -22,11 +22,16 @@ A transparent AI-execution and evidence inspection panel. For every query, Proof
 - **Source Provenance**: Direct citation of authoritative textbook references (e.g., Russell & Norvig) and curated coursework.
 - **Truthful Guardrails**: Explicit detection of disconnected personal/institutional data, preventing hallucinations.
 
-### Innovation B — PathForge (Integration Interfaces Ready — Phase 2)
-Goal-oriented prerequisite navigation and personalized study route finding using graph search (BFS, DFS, A*). Phase 1 establishes the `SearchEngine` interface in `backend/app/core/interfaces.py` and prerequisite relationships in SQLite.
+### Innovation B — PathForge (Operational in Phase 2)
+Goal-oriented prerequisite navigation and personalized study route finding using classical AI search:
+- **Graph Search Algorithms**: Pure Python implementations of Breadth-First Search (BFS), Depth-First Search (DFS), Directed Bidirectional Search, and Greedy Best-First Search.
+- **Topological Learning Journey**: Complete prerequisite closure calculation removing already-mastered concepts and Kahn's algorithm dependency ordering.
+- **Interactive Visual Knowledge Graph**: Interactive SVG canvas displaying 23 curriculum topic nodes and 24 directed prerequisite relationships.
+- **CSP Backtracking Study Scheduler**: Formal Constraint Satisfaction Problem model (Variables, Domains, Constraints) with recursive backtracking search enforcing daily limits, non-overlapping slots, and prerequisite order.
+- **ProofLens Search Traces**: Authentic step-by-step frontier and backtracking execution events.
 
 ### Innovation C — WhatIf Lab (Integration Interfaces Ready — Phase 3)
-Rule-based academic decision-support workbench using Forward and Backward Chaining inference. Phase 1 establishes the `RuleEngine` interface and truth maintenance extension points.
+Rule-based academic decision-support workbench using Forward and Backward Chaining inference. Phase 1 & 2 establish the `RuleEngine` interface, knowledge schemas, and ProofLens event protocols.
 
 ---
 
@@ -34,8 +39,8 @@ Rule-based academic decision-support workbench using Forward and Backward Chaini
 
 | Layer | Technologies |
 |---|---|
-| **Frontend** | React 18, TypeScript, Vite, Tailwind CSS, Lucide React icons, native CSS animations |
-| **Backend** | Python 3.14, FastAPI, Pydantic v2, SQLite (`sqlite3` built-in module) |
+| **Frontend** | React 18, TypeScript, Vite, Tailwind CSS, Lucide React icons, native SVG visualization |
+| **Backend** | Python 3.11+, FastAPI, Pydantic v2, SQLite (`sqlite3` built-in module), pure Python search data structures (`deque`, `heapq`) |
 | **Testing** | `pytest` with FastAPI `TestClient`, TypeScript compiler (`tsc`), ESLint |
 | **Environment** | 100% Local execution — **No paid APIs, API keys, Docker, or external cloud accounts required** |
 
@@ -46,7 +51,7 @@ Rule-based academic decision-support workbench using Forward and Backward Chaini
 | Registration No. | Name | Phase | Primary Scope | Status |
 |---|---|:---:|---|:---:|
 | **URK25CS1090** | **Rufus Samuel R** | **Phase 1** | **Foundation, Intelligent Agent Architecture, ProofLens UI, Knowledge Base & Seed Data** | **Completed & Tested** |
-| URK25CS1063 | Yogith Joy J | Phase 2 | Graph Search (BFS, DFS, A*), Prerequisite Navigation, PathForge Engine | Planned |
+| **URK25CS1063** | **Yogith Joy J** | **Phase 2** | **Graph Search (BFS, DFS, Bidirectional, Best-First), PathForge Engine, CSP Backtracking Scheduler** | **Completed & Tested (39/39 Tests)** |
 | URK25CS1034 | Hiran Antony | Phase 3 | Knowledge Representation (Semantic Nets, FOL), WhatIf Lab Rule Engine | Planned |
 | URK25CS1016 | Naveen Kumar | Phase 4 | Machine Learning Classification, Expert System Shell, Evaluation Benchmarks | Planned |
 
@@ -61,11 +66,11 @@ Rule-based academic decision-support workbench using Forward and Backward Chaini
 | **I** | Foundations of AI | Behavioral Characteristics of Agents | Perception, reactivity, rational responses, truthful uncertainty guards | Phase 1 (Rufus) | **Implemented & Tested** |
 | **I** | Foundations of AI | Typical Intelligent Agents | Simple reflex for greetings; model-based state for anaphora follow-ups | Phase 1 (Rufus) | **Implemented & Tested** |
 | **I** | Foundations of AI | Problem-Solving Formulation | Internal representation (state, goal, actions, result, status) | Phase 1 (Rufus) | **Implemented & Tested** |
-| **II** | Problem-Solving & Search | Uninformed Search (BFS & DFS) | Prerequisite topic graph traversal in PathForge | Phase 2 (Yogith) | Planned |
-| **II** | Problem-Solving & Search | Informed Search (A* & Heuristics) | Optimal study pathfinding with time-budget heuristics | Phase 2 (Yogith) | Planned |
-| **II** | Problem-Solving & Search | Local Search & Hill Climbing | Exam preparation schedule optimization | Phase 2 (Yogith) | Planned |
-| **II** | Problem-Solving & Search | Adversarial Search | Study quiz generator using Minimax principles | Phase 2 (Yogith) | Planned |
-| **II** | Problem-Solving & Search | Constraint Satisfaction (CSP) | Course timetable and prerequisite constraint resolution | Phase 2 (Yogith) | Planned |
+| **II** | **Problem-Solving & Search** | Uninformed Search (BFS & DFS) | Prerequisite shortest route and dependency cycle validation in PathForge | Phase 2 (Yogith) | **Implemented & Tested** |
+| **II** | Problem-Solving & Search | Bidirectional Search | Dual-frontier directed search connecting current knowledge to goal | Phase 2 (Yogith) | **Implemented & Tested** |
+| **II** | Problem-Solving & Search | Informed Search (Greedy Best-First) | Heuristic-guided priority search over curriculum knowledge space | Phase 2 (Yogith) | **Implemented & Tested** |
+| **II** | Problem-Solving & Search | Prerequisite Topological Ordering | Mandatory prerequisite closure and Kahn's DAG dependency sequence | Phase 2 (Yogith) | **Implemented & Tested** |
+| **II** | Problem-Solving & Search | Constraint Satisfaction (CSP) & Backtracking | Study timetable generation with daily hours, slot limits, and prerequisite precedence | Phase 2 (Yogith) | **Implemented & Tested** |
 | **III** | Knowledge Representation | Semantic Networks & Frames | Concept ontology linking topics, prerequisites, and outcomes | Phase 3 (Hiran) | Planned |
 | **III** | Knowledge Representation | Propositional Logic | Academic eligibility criteria verification | Phase 3 (Hiran) | Planned |
 | **III** | Knowledge Representation | First-Order Predicate Logic (FOL) | Formal prerequisite statements (e.g., `HasPrereq(x, y)`) | Phase 3 (Hiran) | Planned |

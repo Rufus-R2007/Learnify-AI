@@ -47,21 +47,21 @@ export const SyllabusModal: React.FC<SyllabusModalProps> = ({ isOpen, onClose })
 
   const teamMembers = [
     {
+      regNo: 'URK25CS1063',
+      name: 'Yogith Joy J',
+      role: 'Phase 2 Lead',
+      scope: 'Graph Search Algorithms (BFS, DFS, Bidirectional Search, Greedy Best-First), Prerequisite Topological Ordering, PathForge Interactive Engine, Constraint Satisfaction with Backtracking',
+      status: 'Completed & Tested (18 Unit Tests Passing)',
+      phase: 2,
+      isCurrent: true,
+    },
+    {
       regNo: 'URK25CS1090',
       name: 'Rufus Samuel R',
       role: 'Phase 1 Lead',
       scope: 'Foundation, Intelligent Agent Architecture, ProofLens Transparent Trace Panel, SQLite Knowledge Base & Seed Data, Full-Stack UI/UX',
       status: 'Completed & Tested',
       phase: 1,
-      isCurrent: true,
-    },
-    {
-      regNo: 'URK25CS1063',
-      name: 'Yogith Joy J',
-      role: 'Phase 2 Lead',
-      scope: 'Graph Search Algorithms (BFS, DFS, A*), Prerequisite Route Finding, PathForge Interactive Study-Path Engine, Constraint Satisfaction',
-      status: 'Planned',
-      phase: 2,
       isCurrent: false,
     },
     {
@@ -69,7 +69,7 @@ export const SyllabusModal: React.FC<SyllabusModalProps> = ({ isOpen, onClose })
       name: 'Hiran Antony',
       role: 'Phase 3 Lead',
       scope: 'Knowledge Representation (Semantic Networks, Frames, Ontologies), First-Order Logic & Predicate Calculus, WhatIf Lab Rule-Based Engine (Forward & Backward Chaining)',
-      status: 'Planned',
+      status: 'Planned (Next Phase)',
       phase: 3,
       isCurrent: false,
     },

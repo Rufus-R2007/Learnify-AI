@@ -122,48 +122,66 @@ async def get_ai_concepts() -> ConceptsResponse:
             concepts=[
                 SyllabusConceptItem(
                     unit="Unit II",
-                    concept="Uninformed Search (BFS & DFS)",
-                    use_case="Prerequisite topic graph traversal in PathForge",
+                    concept="Breadth-First Search (BFS)",
+                    use_case="Unweighted shortest directed pathfinding between curriculum topics in PathForge",
                     phase=2,
-                    status="Planned",
-                    source_reference="backend/app/core/interfaces.py::SearchEngine",
-                    test_reference="tests/phase2/test_search.py (planned)"
+                    status="Implemented and tested",
+                    source_reference="backend/app/search/bfs.py::breadth_first_search",
+                    test_reference="backend/tests/test_search_algorithms.py::test_bfs_shortest_path"
                 ),
                 SyllabusConceptItem(
                     unit="Unit II",
-                    concept="Informed / Heuristic Search (A* & Greedy Best-First)",
-                    use_case="Optimal study schedule pathfinding with time-budget heuristics",
+                    concept="Depth-First Search (DFS)",
+                    use_case="Deep prerequisite chain traversal and 3-color recursion-stack cycle detection",
                     phase=2,
-                    status="Planned",
-                    source_reference="backend/app/core/interfaces.py::SearchEngine",
-                    test_reference="tests/phase2/test_a_star.py (planned)"
+                    status="Implemented and tested",
+                    source_reference="backend/app/search/dfs.py::depth_first_search",
+                    test_reference="backend/tests/test_search_algorithms.py::test_dfs_traversal_and_cycle_detection"
                 ),
                 SyllabusConceptItem(
                     unit="Unit II",
-                    concept="Local Search & Hill Climbing",
-                    use_case="Exam preparation schedule optimization",
+                    concept="Bidirectional Search",
+                    use_case="Simultaneous forward and backward exploration meeting at an intersection",
                     phase=2,
-                    status="Planned",
-                    source_reference="backend/app/core/interfaces.py::SearchEngine",
-                    test_reference="tests/phase2/test_optimization.py (planned)"
+                    status="Implemented and tested",
+                    source_reference="backend/app/search/bidirectional.py::bidirectional_search",
+                    test_reference="backend/tests/test_search_algorithms.py::test_bidirectional_search_directed"
                 ),
                 SyllabusConceptItem(
                     unit="Unit II",
-                    concept="Adversarial Search & Game Trees",
-                    use_case="Competitive study quiz generation with Minimax principles",
+                    concept="Greedy Best-First Search & Heuristics",
+                    use_case="Informed exploration using priority queue (heapq) and topic similarity heuristics",
                     phase=2,
-                    status="Planned",
-                    source_reference="backend/app/core/interfaces.py::SearchEngine",
-                    test_reference="tests/phase2/test_minimax.py (planned)"
+                    status="Implemented and tested",
+                    source_reference="backend/app/search/best_first.py::greedy_best_first_search",
+                    test_reference="backend/tests/test_search_algorithms.py::test_greedy_best_first_search"
+                ),
+                SyllabusConceptItem(
+                    unit="Unit II",
+                    concept="Problem Spaces, Prerequisite Closure & Topological Sequencing",
+                    use_case="Transitive prerequisite closure and Kahn's algorithm DAG ordering for complete learning paths",
+                    phase=2,
+                    status="Implemented and tested",
+                    source_reference="backend/app/search/prerequisites.py::generate_learning_plan",
+                    test_reference="backend/tests/test_search_algorithms.py::test_prerequisite_closure_and_topological_sort"
                 ),
                 SyllabusConceptItem(
                     unit="Unit II",
                     concept="Constraint Satisfaction Problems (CSP)",
-                    use_case="Course timetable and prerequisite constraint resolution",
+                    use_case="Formulation of variables, domains, daily limits, and prerequisite precedence constraints",
                     phase=2,
-                    status="Planned",
-                    source_reference="backend/app/core/interfaces.py::SearchEngine",
-                    test_reference="tests/phase2/test_csp.py (planned)"
+                    status="Implemented and tested",
+                    source_reference="backend/app/search/constraints.py::is_assignment_consistent",
+                    test_reference="backend/tests/test_search_algorithms.py::test_csp_constraints_validation"
+                ),
+                SyllabusConceptItem(
+                    unit="Unit II",
+                    concept="Backtracking Search",
+                    use_case="Constraint propagation and backtracking recovery for feasible study schedule generation",
+                    phase=2,
+                    status="Implemented and tested",
+                    source_reference="backend/app/search/scheduler.py::solve_study_schedule",
+                    test_reference="backend/tests/test_search_algorithms.py::test_backtracking_schedule_generation"
                 ),
             ]
         ),
@@ -327,4 +345,4 @@ async def get_ai_concepts() -> ConceptsResponse:
             ]
         ),
     ]
-    return ConceptsResponse(units=units_data, phase_focus=1)
+    return ConceptsResponse(units=units_data, phase_focus=2)

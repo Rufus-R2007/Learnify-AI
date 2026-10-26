@@ -29,7 +29,7 @@ def get_db():
 
 
 def init_db():
-    """Create all tables if they don't exist."""
+    """Create all tables if they don't exist and run non-destructive migrations."""
     with get_db() as conn:
         conn.executescript("""
             CREATE TABLE IF NOT EXISTS sources (
@@ -43,7 +43,9 @@ def init_db():
                 id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
                 unit INTEGER NOT NULL,
-                description TEXT
+                description TEXT,
+                estimated_hours INTEGER DEFAULT 3,
+                category TEXT DEFAULT 'AI Foundations'
             );
 
             CREATE TABLE IF NOT EXISTS knowledge (
@@ -77,6 +79,14 @@ def init_db():
             );
         """)
 
+        # Non-destructive column migrations for existing databases
+        cursor = conn.execute("PRAGMA table_info(topics)")
+        columns = [row["name"] for row in cursor.fetchall()]
+        if "estimated_hours" not in columns:
+            conn.execute("ALTER TABLE topics ADD COLUMN estimated_hours INTEGER DEFAULT 3")
+        if "category" not in columns:
+            conn.execute("ALTER TABLE topics ADD COLUMN category TEXT DEFAULT 'AI Foundations'")
+
 
 def seed_db():
     """
@@ -95,36 +105,74 @@ def seed_db():
             sources,
         )
 
-        # --- Topics ---
+        # --- Topics (Unit I-V Curated Educational Graph) ---
         topics = [
-            ("topic-ai-foundations", "Artificial Intelligence Foundations", 1, "Core AI concepts, history, and definitions"),
-            ("topic-intelligent-agents", "Intelligent Agents", 1, "Agent types, architectures, and behaviors"),
-            ("topic-problem-solving", "Problem Solving", 1, "Problem formulation and solving approaches"),
-            ("topic-search-bfs-dfs", "Search Algorithms: BFS & DFS", 2, "Uninformed search strategies"),
-            ("topic-heuristic-search", "Heuristic Search", 2, "Informed search with heuristics like A*"),
-            ("topic-knowledge-rep", "Knowledge Representation", 3, "Semantic networks, frames, ontologies"),
-            ("topic-predicate-logic", "Predicate Logic", 3, "First-order logic and quantification"),
-            ("topic-forward-backward", "Forward and Backward Chaining", 4, "Rule-based inference strategies"),
-            ("topic-expert-systems", "Expert Systems", 5, "Architecture and design of expert systems"),
-            ("topic-machine-learning", "Machine Learning", 5, "Learning from data, classification, regression"),
-            ("topic-study-prep", "Study Preparation", 1, "General study and exam preparation guidance"),
+            ("topic-prog-fund", "Programming Fundamentals", 1, "Variables, control structures, functions, and algorithm basics", 3, "Core Programming"),
+            ("topic-python-basics", "Python Basics", 1, "Python syntax, lists, dicts, tuples, and scripting for AI", 4, "Core Programming"),
+            ("topic-discrete-math", "Discrete Mathematics", 1, "Sets, relations, graphs, trees, and Boolean algebra", 5, "Foundational Math"),
+            ("topic-probability", "Probability", 1, "Random variables, distributions, conditional probability, and expectation", 4, "Foundational Math"),
+            ("topic-statistics", "Statistics", 1, "Descriptive statistics, inferential tests, estimation, and hypothesis testing", 4, "Foundational Math"),
+            ("topic-linear-algebra", "Linear Algebra", 1, "Vectors, matrices, eigenvalues, dot products, and transformations", 5, "Foundational Math"),
+            ("topic-ai-foundations", "Artificial Intelligence Foundations", 1, "Core AI concepts, history, definitions, and philosophy", 3, "AI Foundations"),
+            ("topic-intelligent-agents", "Intelligent Agents", 1, "Agent types (reflex, model, goal, utility), environments, and rationality", 3, "AI Foundations"),
+            ("topic-problem-solving", "Problem Solving", 1, "Problem formulation, states, transitions, actions, and goal tests", 3, "Search & Planning"),
+            ("topic-state-spaces", "State Spaces & Problem Formulation", 2, "State spaces, branching factors, graph representation, and frontiers", 3, "Search & Planning"),
+            ("topic-search-bfs-dfs", "Search Algorithms: BFS & DFS", 2, "Uninformed search strategies: FIFO queue BFS and LIFO stack DFS", 4, "Search & Planning"),
+            ("topic-bidirectional-search", "Bidirectional Search", 2, "Simultaneous forward and backward exploration meeting at an intersection", 3, "Search & Planning"),
+            ("topic-heuristic-search", "Heuristic Search", 2, "Informed search with heuristics: Greedy Best-First and A* algorithms", 4, "Search & Planning"),
+            ("topic-csp-search", "Constraint Satisfaction & Backtracking", 2, "Variables, domains, constraints, and backtracking search with heuristics", 4, "Search & Planning"),
+            ("topic-knowledge-rep", "Knowledge Representation", 3, "Semantic networks, conceptual frames, ontologies, and taxonomy", 4, "Logic & Knowledge"),
+            ("topic-prop-logic", "Propositional Logic", 3, "Boolean propositions, connectives, truth tables, and inference rules", 3, "Logic & Knowledge"),
+            ("topic-predicate-logic", "Predicate Logic", 3, "First-order logic (FOL), variables, predicates, and quantifiers", 4, "Logic & Knowledge"),
+            ("topic-forward-backward", "Forward and Backward Chaining", 4, "Rule-based deduction: data-driven forward and goal-driven backward chaining", 4, "Inference & Rules"),
+            ("topic-bayesian", "Bayesian Reasoning", 4, "Probabilistic inference, Bayes' rule, conditional independence, and belief networks", 4, "Probabilistic Reasoning"),
+            ("topic-expert-systems", "Expert Systems", 5, "Architecture of expert systems: knowledge base, inference engine, and explanation", 3, "Applied AI Systems"),
+            ("topic-machine-learning", "Machine Learning", 5, "Supervised, unsupervised, and reinforcement learning principles", 6, "Machine Learning"),
+            ("topic-neural-networks", "Neural Networks & Deep Learning", 5, "Perceptrons, multi-layer networks, backpropagation, and activations", 5, "Machine Learning"),
+            ("topic-study-prep", "Study Preparation", 1, "General study, revision strategies, and AI exam preparation guidance", 2, "Academic Skills"),
         ]
         conn.executemany(
-            "INSERT OR IGNORE INTO topics (id, name, unit, description) VALUES (?, ?, ?, ?)",
+            "INSERT OR REPLACE INTO topics (id, name, unit, description, estimated_hours, category) VALUES (?, ?, ?, ?, ?, ?)",
             topics,
         )
 
-        # --- Topic relationships (for future Phase 2 graph search) ---
+        # --- Topic relationships (Directed prerequisite graph: parent_id -> child_id means parent is prerequisite for child) ---
         relationships = [
+            # Core Programming -> Problem Solving & ML
+            ("topic-prog-fund", "topic-python-basics", "prerequisite"),
+            ("topic-python-basics", "topic-problem-solving", "prerequisite"),
+            ("topic-python-basics", "topic-machine-learning", "prerequisite"),
+
+            # Foundational Math -> Logic, State Spaces, Stats, ML
+            ("topic-discrete-math", "topic-prop-logic", "prerequisite"),
+            ("topic-discrete-math", "topic-state-spaces", "prerequisite"),
+            ("topic-linear-algebra", "topic-machine-learning", "prerequisite"),
+            ("topic-linear-algebra", "topic-neural-networks", "prerequisite"),
+            ("topic-probability", "topic-statistics", "prerequisite"),
+            ("topic-probability", "topic-bayesian", "prerequisite"),
+            ("topic-statistics", "topic-machine-learning", "prerequisite"),
+
+            # AI Foundations -> Agents, Problem Solving, Knowledge Rep
             ("topic-ai-foundations", "topic-intelligent-agents", "prerequisite"),
             ("topic-ai-foundations", "topic-problem-solving", "prerequisite"),
-            ("topic-problem-solving", "topic-search-bfs-dfs", "prerequisite"),
-            ("topic-search-bfs-dfs", "topic-heuristic-search", "prerequisite"),
             ("topic-ai-foundations", "topic-knowledge-rep", "prerequisite"),
-            ("topic-knowledge-rep", "topic-predicate-logic", "prerequisite"),
+
+            # Problem Solving -> State Spaces -> Search
+            ("topic-problem-solving", "topic-state-spaces", "prerequisite"),
+            ("topic-state-spaces", "topic-search-bfs-dfs", "prerequisite"),
+            ("topic-search-bfs-dfs", "topic-bidirectional-search", "prerequisite"),
+            ("topic-search-bfs-dfs", "topic-heuristic-search", "prerequisite"),
+            ("topic-search-bfs-dfs", "topic-csp-search", "prerequisite"),
+
+            # Logic & Knowledge
+            ("topic-knowledge-rep", "topic-prop-logic", "prerequisite"),
+            ("topic-prop-logic", "topic-predicate-logic", "prerequisite"),
             ("topic-predicate-logic", "topic-forward-backward", "prerequisite"),
             ("topic-forward-backward", "topic-expert-systems", "prerequisite"),
-            ("topic-ai-foundations", "topic-machine-learning", "prerequisite"),
+
+            # Search & ML -> Neural Networks
+            ("topic-heuristic-search", "topic-machine-learning", "prerequisite"),
+            ("topic-machine-learning", "topic-neural-networks", "prerequisite"),
         ]
         conn.executemany(
             "INSERT OR IGNORE INTO topic_relationships (parent_id, child_id, relationship) VALUES (?, ?, ?)",
@@ -240,6 +288,27 @@ def seed_db():
             ("k-propositional-logic", "Propositional Logic",
              "Propositional Logic (also called Boolean logic or sentential logic) deals with propositions that are either true or false. Key elements: (1) Atomic propositions — simple statements (P, Q, R); (2) Connectives — AND (∧), OR (∨), NOT (¬), IMPLIES (→), BICONDITIONAL (↔); (3) Truth tables — define the semantics of connectives; (4) Inference rules — Modus Ponens (from P and P→Q, derive Q), Modus Tollens (from ¬Q and P→Q, derive ¬P), Resolution (from P∨Q and ¬P∨R, derive Q∨R). Propositional logic is decidable and has well-defined proof procedures, but it cannot express relationships between objects or use variables. First-Order Logic extends it with these capabilities.",
              "topic-predicate-logic", "src-textbook", "propositional logic,boolean,connectives,truth table,modus ponens,resolution"),
+
+            # Unit II Search & Knowledge Innovations
+            ("k-bidirectional-search", "Bidirectional Search in AI",
+             "Bidirectional Search is an uninformed graph search strategy that runs two simultaneous searches: one forward from the initial state and one backward from the goal state along reversed directed edges, stopping when their search frontiers intersect. Properties: (1) In unweighted directed graphs, it finds the shortest path by edge count just like BFS, but with reduced time and space complexity O(b^(d/2)) instead of O(b^d); (2) Requires reverse-edge traversal from the goal, which requires computing predecessors in directed graphs; (3) Meeting point detection checks when a generated state exists in the opposite frontier; (4) Path reconstruction splices the forward path with the reversed backward path at the meeting node. It is widely used in route planning, puzzle solving, and knowledge-graph pathfinding.",
+             "topic-bidirectional-search", "src-textbook", "bidirectional search,uninformed search,forward search,backward search,meeting point,frontier,shortest path"),
+
+            ("k-greedy-best-first", "Greedy Best-First Search",
+             "Greedy Best-First Search is an informed search algorithm that evaluates candidate nodes using solely a heuristic function h(n) which estimates the cost or semantic distance from node n to the goal. At each step, it expands the node with the lowest h(n) using a priority queue. Key properties: (1) Fast and memory-efficient in guiding the search directly toward the goal; (2) NOT guaranteed to be optimal — it does not guarantee finding the shortest path because it ignores the cost already incurred g(n); (3) Can be susceptible to false leads and local traps. It contrasts with BFS (which guarantees shortest paths on unweighted graphs) and A* (which combines g(n) and h(n) to guarantee optimality).",
+             "topic-heuristic-search", "src-textbook", "greedy best-first search,heuristic,informed search,priority queue,evaluation function,h(n),best first"),
+
+            ("k-csp-backtracking", "Constraint Satisfaction Problems (CSP) and Backtracking",
+             "A Constraint Satisfaction Problem (CSP) is formulated in terms of variables X = {X1, ..., Xn}, domains D = {D1, ..., Dn} of allowable values, and constraints C = {C1, ..., Cm} specifying allowable combinations of values. A solution is a consistent, complete assignment of values to variables. Backtracking Search is the standard depth-first algorithm for CSPs: it chooses an unassigned variable, tries values from its domain, checks for constraint satisfaction, and backtracks upon encountering a conflict. In study planning, variables represent learning sessions, domains represent available time slots, and constraints enforce prerequisite precedence, daily hour limits, and student availability.",
+             "topic-csp-search", "src-textbook", "constraint satisfaction,CSP,backtracking,MRV,variables,domains,constraints,scheduler,study planning"),
+
+            ("k-neural-networks", "Neural Networks and Deep Learning",
+             "Neural networks are computational models inspired by biological nervous systems, consisting of layers of interconnected artificial neurons (perceptrons). Each neuron computes a weighted sum of its inputs, adds a bias, and applies a non-linear activation function (such as ReLU, Sigmoid, or Tanh). Deep learning refers to neural networks with multiple hidden layers. Training involves forward propagation to compute predictions, loss calculation against target values, and backpropagation using gradient descent and the chain rule to update weights. Prerequisites include linear algebra, calculus, and foundational machine learning.",
+             "topic-neural-networks", "src-textbook", "neural networks,deep learning,perceptrons,backpropagation,activation function,layers,weights"),
+
+            ("k-bayesian-reasoning", "Bayesian Reasoning and Probabilistic Inference",
+             "Bayesian Reasoning provides a mathematical framework for reasoning under uncertainty based on Bayes' Theorem: P(A|B) = [P(B|A) * P(A)] / P(B). It updates the prior probability of a hypothesis as new evidence is observed to compute the posterior probability. Bayesian Belief Networks (BBNs) are directed acyclic graphs representing probabilistic dependencies between random variables, where nodes represent variables and directed edges represent conditional dependencies. Inference algorithms compute posterior probability distributions given observed evidence, forming the foundation for diagnostic systems and decision theory.",
+             "topic-bayesian", "src-textbook", "Bayesian reasoning,Bayes theorem,probability,probabilistic reasoning,Bayesian networks,uncertainty"),
         ]
         conn.executemany(
             "INSERT OR IGNORE INTO knowledge (id, title, content, topic_id, source_id, keywords) VALUES (?, ?, ?, ?, ?, ?)",
@@ -382,3 +451,72 @@ def search_faqs(query_terms: List[str]) -> List[Dict[str, Any]]:
 
     results.sort(key=lambda r: r['relevance_score'], reverse=True)
     return results
+
+
+def get_all_topics() -> List[Dict[str, Any]]:
+    """
+    Retrieve all topics with their prerequisites, dependents, estimated hours,
+    unit, category, and metadata for graph search and PathForge.
+    """
+    with get_db() as conn:
+        rows = conn.execute("""
+            SELECT id, name, unit, description, estimated_hours, category
+            FROM topics
+            ORDER BY unit, name
+        """).fetchall()
+        topics = [dict(r) for r in rows]
+
+        rel_rows = conn.execute("""
+            SELECT parent_id, child_id, relationship
+            FROM topic_relationships
+        """).fetchall()
+
+        prereqs_map: Dict[str, List[str]] = {}
+        dependents_map: Dict[str, List[str]] = {}
+        for r in rel_rows:
+            p = r["parent_id"]
+            c = r["child_id"]
+            prereqs_map.setdefault(c, []).append(p)
+            dependents_map.setdefault(p, []).append(c)
+
+        for t in topics:
+            t["prerequisites"] = prereqs_map.get(t["id"], [])
+            t["dependents"] = dependents_map.get(t["id"], [])
+
+        return topics
+
+
+def get_topic_by_id(topic_id: str) -> Optional[Dict[str, Any]]:
+    """Retrieve a single topic by ID with prerequisite and dependent lists."""
+    with get_db() as conn:
+        row = conn.execute("""
+            SELECT id, name, unit, description, estimated_hours, category
+            FROM topics
+            WHERE id = ?
+        """, (topic_id,)).fetchone()
+        if not row:
+            return None
+        topic = dict(row)
+
+        prereqs = conn.execute("""
+            SELECT parent_id FROM topic_relationships WHERE child_id = ?
+        """, (topic_id,)).fetchall()
+        topic["prerequisites"] = [r["parent_id"] for r in prereqs]
+
+        dependents = conn.execute("""
+            SELECT child_id FROM topic_relationships WHERE parent_id = ?
+        """, (topic_id,)).fetchall()
+        topic["dependents"] = [r["child_id"] for r in dependents]
+
+        return topic
+
+
+def get_all_topic_relationships() -> List[Dict[str, str]]:
+    """Retrieve all prerequisite relationships."""
+    with get_db() as conn:
+        rows = conn.execute("""
+            SELECT parent_id, child_id, relationship
+            FROM topic_relationships
+        """).fetchall()
+        return [dict(r) for r in rows]
+

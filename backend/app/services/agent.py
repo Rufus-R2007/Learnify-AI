@@ -34,6 +34,7 @@ from app.database import (
     search_faqs,
     get_all_knowledge,
 )
+from app.services.pathforge_service import pathforge_service
 
 # Common English conversational stopwords to filter out for keyword search
 STOPWORDS = {
@@ -59,19 +60,79 @@ STOPWORDS = {
 AI_ENTITIES = {
     "artificial intelligence": ["ai", "artificial intelligence"],
     "machine learning": ["ml", "machine learning", "supervised", "unsupervised"],
+    "neural networks": ["neural networks", "neural network", "deep learning", "perceptron"],
     "breadth-first search": ["bfs", "breadth-first search", "breadth first search"],
     "depth-first search": ["dfs", "depth-first search", "depth first search"],
+    "bidirectional search": ["bidirectional", "bidirectional search"],
     "heuristic search": ["heuristic", "a*", "a-star", "hill climbing", "informed search"],
+    "constraint satisfaction": ["csp", "constraint satisfaction", "backtracking", "constraints"],
     "intelligent agents": ["agent", "agents", "intelligent agent", "reflex agent", "rational agent"],
     "knowledge representation": ["knowledge representation", "semantic network", "frames", "ontology"],
     "predicate logic": ["predicate logic", "first-order logic", "fol", "quantifiers"],
     "propositional logic": ["propositional logic", "boolean logic"],
     "forward chaining": ["forward chaining", "data-driven"],
     "backward chaining": ["backward chaining", "goal-driven"],
+    "bayesian reasoning": ["bayesian", "bayesian reasoning", "bayes", "belief network"],
     "expert systems": ["expert system", "expert systems", "mycin", "inference engine"],
-    "problem solving": ["problem solving", "state space"],
+    "problem solving": ["problem solving", "state space", "state spaces"],
+    "linear algebra": ["linear algebra", "matrices", "vectors", "eigenvalues"],
+    "probability": ["probability", "random variable"],
+    "statistics": ["statistics", "hypothesis testing"],
+    "discrete mathematics": ["discrete math", "discrete mathematics"],
+    "python basics": ["python", "python basics"],
+    "programming fundamentals": ["programming", "programming fundamentals"],
     "study preparation": ["exam", "prepare", "study", "resources", "tips"]
 }
+
+# Keyword to canonical topic ID map for PathForge planning queries
+TOPIC_QUERY_MAP = [
+    ("neural networks", "topic-neural-networks"),
+    ("neural network", "topic-neural-networks"),
+    ("deep learning", "topic-neural-networks"),
+    ("machine learning", "topic-machine-learning"),
+    ("bayesian reasoning", "topic-bayesian"),
+    ("bayesian", "topic-bayesian"),
+    ("bayes", "topic-bayesian"),
+    ("expert systems", "topic-expert-systems"),
+    ("expert system", "topic-expert-systems"),
+    ("heuristic search", "topic-heuristic-search"),
+    ("heuristics", "topic-heuristic-search"),
+    ("a*", "topic-heuristic-search"),
+    ("constraint satisfaction", "topic-csp-search"),
+    ("csp", "topic-csp-search"),
+    ("backtracking", "topic-csp-search"),
+    ("bidirectional search", "topic-bidirectional-search"),
+    ("bidirectional", "topic-bidirectional-search"),
+    ("breadth-first search", "topic-search-bfs-dfs"),
+    ("breadth first search", "topic-search-bfs-dfs"),
+    ("bfs", "topic-search-bfs-dfs"),
+    ("depth-first search", "topic-search-bfs-dfs"),
+    ("depth first search", "topic-search-bfs-dfs"),
+    ("dfs", "topic-search-bfs-dfs"),
+    ("search algorithms", "topic-search-bfs-dfs"),
+    ("predicate logic", "topic-predicate-logic"),
+    ("first-order logic", "topic-predicate-logic"),
+    ("first order logic", "topic-predicate-logic"),
+    ("fol", "topic-predicate-logic"),
+    ("propositional logic", "topic-prop-logic"),
+    ("forward chaining", "topic-forward-backward"),
+    ("backward chaining", "topic-forward-backward"),
+    ("knowledge representation", "topic-knowledge-rep"),
+    ("semantic networks", "topic-knowledge-rep"),
+    ("intelligent agents", "topic-intelligent-agents"),
+    ("state spaces", "topic-state-spaces"),
+    ("problem solving", "topic-problem-solving"),
+    ("linear algebra", "topic-linear-algebra"),
+    ("probability", "topic-probability"),
+    ("statistics", "topic-statistics"),
+    ("discrete mathematics", "topic-discrete-math"),
+    ("discrete math", "topic-discrete-math"),
+    ("python basics", "topic-python-basics"),
+    ("python", "topic-python-basics"),
+    ("programming", "topic-prog-fund"),
+    ("ai foundations", "topic-ai-foundations"),
+    ("artificial intelligence", "topic-ai-foundations"),
+]
 
 
 class PerceptionModule:
@@ -179,10 +240,20 @@ class GoalOrientedClassifier:
         "scholarship criteria", "my timetable", "my class"
     ]
 
+    PATHFORGE_PLANNING_TRIGGERS = [
+        "how do i start learning", "how to start learning", "how do i begin learning", "how can i learn",
+        "what should i learn before", "what do i need to know before", "what do i need to learn before",
+        "what to learn before", "prerequisites for", "prerequisite for", "prerequisites of", "prerequisite of",
+        "prerequisites before", "create a study path", "create a learning path", "generate a study path",
+        "generate a learning path", "plan my ai studies", "plan my studies", "study path to learn",
+        "study path for", "path to learn", "learning path for", "learning path to",
+        "show me the prerequisites", "show prerequisites", "what are the prerequisites",
+        "how to reach", "how can i reach", "route to", "route from"
+    ]
+
     STUDY_GUIDANCE_TRIGGERS = [
         "how to prepare", "study plan", "exam prep", "how do i study",
-        "prepare for exam", "prerequisites for machine learning",
-        "what do i need to know before studying", "study resources"
+        "prepare for exam", "what do i need to know before studying", "study resources"
     ]
 
     @classmethod
@@ -202,15 +273,19 @@ class GoalOrientedClassifier:
         ):
             return "GOAL_PERSONAL_OR_INSTITUTIONAL"
 
-        # 4. Study guidance
+        # 4. PathForge Planning & Prerequisite Search (Phase 2 Signature Engine)
+        if any(pt in normalized_text for pt in cls.PATHFORGE_PLANNING_TRIGGERS):
+            return "GOAL_PATHFORGE_PLANNING"
+
+        # 5. Study guidance & exam preparation
         if any(guide in normalized_text for guide in cls.STUDY_GUIDANCE_TRIGGERS):
             return "GOAL_STUDY_GUIDANCE"
 
-        # 5. FAQ about Learnify AI
+        # 6. FAQ about Learnify AI
         if "learnify" in normalized_text or "what is this app" in normalized_text or "how does prooflens work" in normalized_text:
             return "GOAL_FAQ"
 
-        # 6. Default to academic knowledge retrieval if keywords exist
+        # 7. Default to academic knowledge retrieval if keywords exist
         if keywords:
             return "GOAL_KNOWLEDGE_QUERY"
 
@@ -424,6 +499,126 @@ class IntelligentAgent:
                     "Help me prepare for an exam"
                 ],
                 missingInfo="Personal attendance and student portal records are not connected."
+            )
+
+        # CASE PATHFORGE_PLANNING: Intelligent Study & Prerequisite Planning (Phase 2 Signature Engine)
+        if goal == "GOAL_PATHFORGE_PLANNING":
+            concepts_used.append("Goal-Oriented Action Selection")
+            concepts_used.append("Prerequisite Closure Traversal")
+            concepts_used.append("Topological Dependency Planning")
+            concepts_used.append("PathForge Planning Engine")
+
+            # Resolve target topic from query and context
+            resolved_topic_id = None
+            query_normalized = perception["normalized"]
+            for trigger_name, tid in TOPIC_QUERY_MAP:
+                if trigger_name in query_normalized or (antecedent and trigger_name in antecedent.lower()):
+                    resolved_topic_id = tid
+                    break
+
+            if resolved_topic_id:
+                plan_result = pathforge_service.plan_learning_journey(
+                    goal_topic_id=resolved_topic_id,
+                    algorithm="bfs"
+                )
+
+                if plan_result.get("success"):
+                    goal_info = plan_result["goal"]
+                    plan_data = plan_result["plan"]
+                    remaining_items = plan_data.get("ordered_plan", [])
+                    total_hours = plan_data.get("total_estimated_hours", 0)
+
+                    # Build markdown response
+                    lines = [
+                        f"### 🗺️ PathForge Learning Path: **{goal_info['name']}**\n",
+                        f"To master **{goal_info['name']}** ({goal_info.get('category', 'Curriculum')}, Unit {goal_info.get('unit', 'V')}), "
+                        f"PathForge's classical search engine has verified the curriculum graph and topologically ordered all mandatory prerequisites:\n",
+                    ]
+
+                    if remaining_items:
+                        lines.append("**Recommended Learning Sequence:**")
+                        for idx, item in enumerate(remaining_items, 1):
+                            lines.append(f"{idx}. **{item['name']}** (Unit {item['unit']}, ~{item['estimated_hours']}h) — *{item['reason']}*")
+                        lines.append(f"\n📊 **Total Estimated Effort:** ~{total_hours} study hours across {len(remaining_items)} topics.")
+                    else:
+                        lines.append("All prerequisites for this topic are already satisfied!")
+
+                    lines.append(
+                        "\n---\n"
+                        "💡 **Interactive Visualization & Scheduling:**\n"
+                        "• Open **PathForge** in the sidebar to inspect the interactive directed knowledge graph.\n"
+                        "• Use the **Algorithm Explorer** to compare BFS, Bidirectional Search, and Greedy Best-First Search.\n"
+                        "• Use the **Study Planner** to generate a conflict-free study schedule based on your weekly availability."
+                    )
+
+                    response_text = "\n".join(lines)
+
+                    # Append PathForge trace steps to the existing perception/context trace
+                    for trace_dict in plan_result.get("trace", []):
+                        step_counter += 1
+                        traces.append(TraceStep(
+                            id=f"step-{step_counter}",
+                            stage=trace_dict.get("stage", "Planning"),
+                            method=trace_dict.get("method", "PathForge"),
+                            description=trace_dict.get("description", ""),
+                            status=StepStatus(trace_dict.get("status", "completed")),
+                            input_summary=trace_dict.get("input_summary"),
+                            output_summary=trace_dict.get("output_summary"),
+                            evidence_ids=trace_dict.get("evidence_ids", []),
+                            duration_ms=trace_dict.get("duration_ms", 0.1),
+                            execution_type=ExecutionType.GOAL_BASED,
+                        ))
+
+                    return ChatResponse(
+                        response=response_text,
+                        conceptsUsed=concepts_used,
+                        confidence=None,
+                        matchScore=1.0,
+                        sources=[
+                            SourceReference(
+                                id="src-textbook",
+                                name="AI: A Modern Approach (Russell & Norvig)",
+                                description="Curriculum Prerequisite Knowledge Graph"
+                            ),
+                            SourceReference(
+                                id="src-coursework",
+                                name="Learnify AI Course Materials",
+                                description="Unit II Search & Planning Foundations"
+                            )
+                        ],
+                        trace=traces,
+                        status=ResponseStatus.ANSWERED,
+                        suggestions=[
+                            f"How do I study {goal_info['name']}?",
+                            "Open PathForge to explore the topic graph",
+                            "Plan my AI studies for this week"
+                        ]
+                    )
+
+            # If no specific topic matched or generic planning request
+            all_topics = pathforge_service.get_topics()
+            sample_topics = [t["name"] for t in all_topics if t["unit"] in (2, 4, 5)][:5]
+            clarification_text = (
+                "I can generate an intelligent study path and prerequisite roadmap for you! "
+                "Which specific topic would you like to plan for?\n\n"
+                "Popular options in our curriculum include:\n"
+                + "\n".join(f"• **{name}**" for name in sample_topics) +
+                "\n\nYou can also click **PathForge** in the left sidebar to explore the full interactive graph and select your target topic visually."
+            )
+            return ChatResponse(
+                response=clarification_text,
+                conceptsUsed=concepts_used,
+                confidence=None,
+                matchScore=None,
+                sources=[],
+                trace=traces,
+                status=ResponseStatus.NEEDS_CLARIFICATION,
+                suggestions=[
+                    "What should I learn before neural networks?",
+                    "How do I start learning machine learning?",
+                    "Show me the prerequisites for Bayesian reasoning"
+                ],
+                missingInfo="Target learning topic was not specified in the planning query."
             )
 
         # CASE D: FAQ RETRIEVAL

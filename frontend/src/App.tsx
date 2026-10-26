@@ -6,6 +6,7 @@ import ProofLensPanel from './components/ProofLensPanel';
 import KnowledgeExplorerModal from './components/KnowledgeExplorerModal';
 import SyllabusModal from './components/SyllabusModal';
 import FutureModuleModal from './components/FutureModuleModal';
+import PathForgeView from './components/PathForgeView';
 import { Message } from './types';
 import { checkHealth } from './services/api';
 
@@ -15,9 +16,9 @@ export function App() {
       id: 'welcome-1',
       role: 'assistant',
       content:
-        "Hello! I'm Learnify AI, your intelligent academic assistant for Artificial Intelligence. I can explain AI concepts, search strategies, intelligent agents, and reasoning processes. Every answer is grounded in verified curriculum records and transparently traced in ProofLens. What would you like to explore today?",
+        "Hello! I'm Learnify AI, your intelligent academic assistant for Artificial Intelligence (Phase 2). I can solve curriculum planning problems via classical AI search (BFS, DFS, Bidirectional Search, Greedy Best-First) and generate constraint-based study schedules with backtracking in PathForge. Every answer is grounded in verified curriculum records and transparently traced in ProofLens. What would you like to explore today?",
       timestamp: new Date(),
-      conceptsUsed: ['Simple Reflex Agent', 'Perception & Action'],
+      conceptsUsed: ['Simple Reflex Agent', 'Perception & Action', 'Problem Spaces and Search'],
       matchScore: 1.0,
       sources: [
         {
@@ -31,7 +32,7 @@ export function App() {
           id: 'step-1',
           stage: 'Session Initialization',
           method: 'Simple Reflex Welcome Dispatch',
-          description: 'Initialized conversational session and loaded Unit I curriculum context.',
+          description: 'Initialized conversational session and loaded Unit I & Unit II curriculum context.',
           status: 'completed',
           input_summary: 'Application start',
           output_summary: 'Orientation message prepared with Unit I-V capabilities',
@@ -42,10 +43,10 @@ export function App() {
       ],
       status: 'greeting',
       suggestions: [
-        'What is artificial intelligence?',
+        'How do I start learning machine learning?',
+        'What should I learn before neural networks?',
+        'Show me the prerequisites for Bayesian reasoning',
         'What is breadth-first search?',
-        'Explain the types of intelligent agents',
-        'Help me prepare for an exam',
       ],
     },
   ]);
@@ -56,11 +57,12 @@ export function App() {
   const [isProofLensOpen, setIsProofLensOpen] = useState(true);
   const [backendHealthy, setBackendHealthy] = useState(true);
 
-  // Modals state
+  // Modals and PathForge state
   const [isKnowledgeOpen, setIsKnowledgeOpen] = useState(false);
   const [isSyllabusOpen, setIsSyllabusOpen] = useState(false);
-  const [futureModule, setFutureModule] = useState<'pathforge' | 'whatif' | null>(null);
+  const [futureModule, setFutureModule] = useState<'whatif' | null>(null);
   const [pendingQuery, setPendingQuery] = useState<string | null>(null);
+  const [pathForgeGoalId, setPathForgeGoalId] = useState<string | null>(null);
 
   // Health check on mount and interval
   useEffect(() => {
@@ -83,7 +85,8 @@ export function App() {
     if (view === 'knowledge') {
       setIsKnowledgeOpen(true);
     } else if (view === 'pathforge') {
-      setFutureModule('pathforge');
+      // PathForge is now live in Phase 2
+      setActiveView('pathforge');
     } else if (view === 'whatif') {
       setFutureModule('whatif');
     } else if (view === 'syllabus') {
@@ -131,6 +134,13 @@ export function App() {
     setActiveMessage(freshWelcome);
   };
 
+  const handleOpenPathForge = (goalId?: string) => {
+    if (goalId) {
+      setPathForgeGoalId(goalId);
+    }
+    setActiveView('pathforge');
+  };
+
   const handleAskFromKnowledge = (question: string) => {
     setPendingQuery(question);
     setActiveView('chat');
@@ -158,19 +168,31 @@ export function App() {
           hasTrace={Boolean(activeMessage?.trace && activeMessage.trace.length > 0)}
           onOpenKnowledge={() => setIsKnowledgeOpen(true)}
           onNewChat={handleNewChat}
+          onOpenPathForge={() => handleOpenPathForge()}
         />
 
-        {/* Center Chat View */}
+        {/* Center Workspace: Chat or PathForge */}
         <div className="flex-1 flex overflow-hidden">
-          <ChatInterface
-            messages={messages}
-            setMessages={setMessages}
-            activeMessage={activeMessage}
-            setActiveMessage={setActiveMessage}
-            onOpenProofLens={() => setIsProofLensOpen(true)}
-            externalQuery={pendingQuery}
-            onClearExternalQuery={() => setPendingQuery(null)}
-          />
+          {activeView === 'pathforge' ? (
+            <PathForgeView
+              onBackToChat={() => setActiveView('chat')}
+              onSyncTraceToProofLens={(syntheticMsg) => {
+                setActiveMessage(syntheticMsg);
+                setIsProofLensOpen(true);
+              }}
+              initialGoalTopicId={pathForgeGoalId}
+            />
+          ) : (
+            <ChatInterface
+              messages={messages}
+              setMessages={setMessages}
+              activeMessage={activeMessage}
+              setActiveMessage={setActiveMessage}
+              onOpenProofLens={() => setIsProofLensOpen(true)}
+              externalQuery={pendingQuery}
+              onClearExternalQuery={() => setPendingQuery(null)}
+            />
+          )}
 
           {/* 3. Right Desktop ProofLens Panel */}
           {isProofLensOpen && (

@@ -1,5 +1,4 @@
-import React from 'react';
-import { Menu, ShieldCheck, Plus, BookOpen } from 'lucide-react';
+import { Menu, ShieldCheck, Plus, BookOpen, GitBranch } from 'lucide-react';
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -8,6 +7,7 @@ interface HeaderProps {
   hasTrace: boolean;
   onOpenKnowledge: () => void;
   onNewChat: () => void;
+  onOpenPathForge?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -17,6 +17,7 @@ export const Header: React.FC<HeaderProps> = ({
   hasTrace,
   onOpenKnowledge,
   onNewChat,
+  onOpenPathForge,
 }) => {
   return (
     <header className="h-14 border-b border-slate-200/80 bg-white/95 backdrop-blur-xs px-4 flex items-center justify-between z-10 shrink-0">
@@ -32,14 +33,24 @@ export const Header: React.FC<HeaderProps> = ({
 
         <div className="flex items-center space-x-2">
           <span className="text-sm font-bold text-slate-900 tracking-tight">Learnify AI</span>
-          <span className="hidden sm:inline-block px-2 py-0.5 rounded text-[10px] font-semibold bg-brand-50 text-brand-700 border border-brand-200">
-            Phase 1 Foundation
+          <span className="hidden sm:inline-block px-2 py-0.5 rounded text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+            Phase 2: Search & Planning
           </span>
         </div>
       </div>
 
       {/* Right: Quick Actions & ProofLens Toggle */}
       <div className="flex items-center space-x-2">
+        {onOpenPathForge && (
+          <button
+            onClick={onOpenPathForge}
+            className="hidden sm:inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/60 transition-colors"
+          >
+            <GitBranch className="w-3.5 h-3.5 text-indigo-600" />
+            <span>PathForge</span>
+          </button>
+        )}
+
         <button
           onClick={onOpenKnowledge}
           className="hidden md:inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 transition-colors"

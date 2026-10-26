@@ -7,6 +7,11 @@ import {
   KnowledgeListResponse,
   KnowledgeRecord,
   HealthResponse,
+  PathForgeTopic,
+  PathForgeGraphResponse,
+  LearningPlanResponse,
+  CompareAlgorithmsResponse,
+  StudyScheduleResponse,
 } from '../types';
 
 // Create axios instance with base configuration
@@ -125,6 +130,111 @@ export const checkHealth = async (): Promise<HealthResponse | { status: string }
     return response.data;
   } catch (error) {
     return { status: 'unavailable' };
+  }
+};
+
+/**
+ * PATHFORGE (PHASE 2) API CLIENT METHODS
+ */
+
+/**
+ * Fetch all available curriculum topics for PathForge.
+ */
+export const getPathForgeTopics = async (): Promise<{ total: number; topics: PathForgeTopic[] }> => {
+  try {
+    const response = await api.get<{ total: number; topics: PathForgeTopic[] }>('/api/pathforge/topics');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching PathForge topics:', error);
+    throw error;
+  }
+};
+
+/**
+ * Fetch the complete curriculum directed knowledge graph for visualization.
+ */
+export const getPathForgeGraph = async (): Promise<PathForgeGraphResponse> => {
+  try {
+    const response = await api.get<PathForgeGraphResponse>('/api/pathforge/graph');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching PathForge graph:', error);
+    throw error;
+  }
+};
+
+/**
+ * Plan topological learning journey with prerequisite resolution and search route.
+ */
+export const planLearningPath = async (
+  goalTopicId: string,
+  knownTopicIds: string[] = [],
+  startTopicId?: string | null,
+  algorithm: string = 'bfs'
+): Promise<LearningPlanResponse> => {
+  try {
+    const response = await api.post<LearningPlanResponse>('/api/pathforge/path', {
+      goal_topic_id: goalTopicId,
+      known_topic_ids: knownTopicIds,
+      start_topic_id: startTopicId || undefined,
+      algorithm,
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.data?.detail) {
+      throw new Error(error.response.data.detail);
+    }
+    throw new Error('Failed to plan learning path');
+  }
+};
+
+/**
+ * Execute and compare BFS, Bidirectional Search, Greedy Best-First, and DFS.
+ */
+export const compareAlgorithms = async (
+  startTopicId: string,
+  goalTopicId: string
+): Promise<CompareAlgorithmsResponse> => {
+  try {
+    const response = await api.post<CompareAlgorithmsResponse>('/api/pathforge/compare', {
+      start_topic_id: startTopicId,
+      goal_topic_id: goalTopicId,
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.data?.detail) {
+      throw new Error(error.response.data.detail);
+    }
+    throw new Error('Failed to compare algorithms');
+  }
+};
+
+/**
+ * Generate a study schedule respecting constraints via Backtracking Search.
+ */
+export const generateStudySchedule = async (params: {
+  goalTopicId: string;
+  knownTopicIds?: string[];
+  availableDays?: string[];
+  maxDailyHours?: number;
+  preferredSessionHours?: number;
+  planningWeeks?: number;
+}): Promise<StudyScheduleResponse> => {
+  try {
+    const response = await api.post<StudyScheduleResponse>('/api/pathforge/schedule', {
+      goal_topic_id: params.goalTopicId,
+      known_topic_ids: params.knownTopicIds || [],
+      available_days: params.availableDays || ['Monday', 'Wednesday', 'Friday'],
+      max_daily_hours: params.maxDailyHours || 2,
+      preferred_session_hours: params.preferredSessionHours || 1,
+      planning_weeks: params.planningWeeks || 2,
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.data?.detail) {
+      throw new Error(error.response.data.detail);
+    }
+    throw new Error('Failed to generate study schedule');
   }
 };
 
