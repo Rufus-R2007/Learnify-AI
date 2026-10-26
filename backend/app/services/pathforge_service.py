@@ -202,6 +202,7 @@ class PathForgeService:
             t_duration_search = (time.perf_counter() - t0) * 1000.0
             search_result_dict = search_res.to_dict()
 
+            search_edges = getattr(search_res, "edge_count", max(0, len(search_res.path) - 1))
             traces.append(TraceStep(
                 id=f"step-{step_counter}",
                 stage="Route Pathfinding",
@@ -213,7 +214,7 @@ class PathForgeService:
                 status=StepStatus.COMPLETED if search_res.reachable else StepStatus.FALLBACK,
                 input_summary=f"Start: {effective_start}, Target: {goal_topic_id}, Algorithm: {algo_choice}",
                 output_summary=(
-                    f"Path length: {search_res.edge_count} edges, "
+                    f"Path length: {search_edges} edges, "
                     f"Reachable: {search_res.reachable}, Nodes explored: {search_res.explored_count}"
                 ),
                 evidence_ids=search_res.path[:5] if search_res.path else [],

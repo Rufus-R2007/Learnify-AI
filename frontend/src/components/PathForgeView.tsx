@@ -19,6 +19,7 @@ import {
   RotateCcw,
   CheckSquare,
   Square,
+  X,
 } from 'lucide-react';
 import {
   PathForgeTopic,
@@ -146,29 +147,37 @@ export const PathForgeView: React.FC<PathForgeViewProps> = ({
   }, [initialGoalTopicId]);
 
   // Handle plan generation
-  const handleGeneratePath = async (algoToUse?: string) => {
-    if (!selectedGoalId) return;
+  const handleGeneratePath = async (
+    algoToUse?: string,
+    goalToUse?: string,
+    startToUse?: string | null
+  ) => {
+    const targetGoal = goalToUse || selectedGoalId;
+    if (!targetGoal) return;
+    const targetStart = startToUse !== undefined ? startToUse : selectedStartId;
+    const targetAlgo = algoToUse || selectedAlgo;
+
     setIsPlanning(true);
     setError(null);
     try {
       const res = await planLearningPath(
-        selectedGoalId,
+        targetGoal,
         knownTopicIds,
-        selectedStartId || null,
-        algoToUse || selectedAlgo
+        targetStart || null,
+        targetAlgo
       );
       setCurrentPlan(res);
       setActiveTrace(res.trace || []);
-      setTraceTitle(`Learning Path: ${res.goal_topic_name} (${(algoToUse || selectedAlgo).toUpperCase()})`);
+      setTraceTitle(`Learning Path: ${res.goal_topic_name} (${(res.algorithm_used || targetAlgo || 'topological').toUpperCase()})`);
 
       if (onSyncTraceToProofLens && res.trace) {
         const syntheticMessage: Message = {
           id: `pathforge-${Date.now()}`,
           role: 'assistant',
-          content: `PathForge planned a complete learning journey for **${res.goal_topic_name}** using ${(res.algorithm_used || 'topological').toUpperCase()}. Requires ${res.remaining_prerequisites?.length || 0} remaining topics (${res.total_estimated_hours || 0} estimated hours).`,
+          content: `PathForge planned a complete learning journey for **${res.goal_topic_name}** using ${(res.algorithm_used || targetAlgo || 'topological').toUpperCase()}. Requires ${res.remaining_prerequisites?.length || 0} remaining topics (${res.total_estimated_hours || 0} estimated hours).`,
           timestamp: new Date(),
           conceptsUsed: [
-            res.algorithm_used.toUpperCase(),
+            (res.algorithm_used || targetAlgo || 'topological').toUpperCase(),
             'Topological Sorting',
             'Prerequisite Closure',
             'Search Techniques'
@@ -480,8 +489,9 @@ export const PathForgeView: React.FC<PathForgeViewProps> = ({
                       <select
                         value={selectedGoalId}
                         onChange={(e) => {
-                          setSelectedGoalId(e.target.value);
-                          setSelectedNodeId(e.target.value);
+                          const newGoal = e.target.value;
+                          setSelectedGoalId(newGoal);
+                          handleGeneratePath(selectedAlgo, newGoal, selectedStartId);
                         }}
                         className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none pr-8 cursor-pointer"
                       >
@@ -507,20 +517,27 @@ export const PathForgeView: React.FC<PathForgeViewProps> = ({
                       <span>Start Node (Single-Path Route)</span>
                       <span className="text-[10px] text-slate-400 font-normal">Optional</span>
                     </label>
-                    <select
-                      value={selectedStartId}
-                      onChange={(e) => setSelectedStartId(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none pr-8 cursor-pointer"
-                    >
-                      <option value="">No single start (prerequisite closure only)</option>
-                      {topics
-                        .filter((t) => t.id !== selectedGoalId)
-                        .map((topic) => (
-                          <option key={topic.id} value={topic.id}>
-                            {topic.name} (Unit {topic.unit})
-                          </option>
-                        ))}
-                    </select>
+                    <div className="relative">
+                      <select
+                        value={selectedStartId}
+                        onChange={(e) => {
+                          const newStart = e.target.value;
+                          setSelectedStartId(newStart);
+                          handleGeneratePath(selectedAlgo, selectedGoalId, newStart);
+                        }}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none pr-8 cursor-pointer"
+                      >
+                        <option value="">No single start (prerequisite closure only)</option>
+                        {topics
+                          .filter((t) => t.id !== selectedGoalId)
+                          .map((topic) => (
+                            <option key={topic.id} value={topic.id}>
+                              {topic.name} (Unit {topic.unit})
+                            </option>
+                          ))}
+                      </select>
+                      <ChevronRight className="w-4 h-4 text-slate-400 absolute right-2.5 top-2.5 pointer-events-none rotate-90" />
+                    </div>
                   </div>
 
                   {/* Algorithm Selector */}
@@ -537,14 +554,23 @@ export const PathForgeView: React.FC<PathForgeViewProps> = ({
                       ].map((algo) => (
                         <button
                           key={algo.id}
-                          onClick={() => setSelectedAlgo(algo.id)}
-                          className={`p-2 rounded-xl text-left border transition-all ${
+                          type="button"
+                          onClick={() => {
+                            setSelectedAlgo(algo.id);
+                            handleGeneratePath(algo.id, selectedGoalId, selectedStartId);
+                          }}
+                          className={`p-2 rounded-xl text-left border transition-all cursor-pointer ${
                             selectedAlgo === algo.id
-                              ? 'bg-indigo-50/80 border-indigo-300 text-indigo-900 shadow-2xs'
+                              ? 'bg-indigo-50/80 border-indigo-400 text-indigo-900 shadow-xs ring-1 ring-indigo-400/30'
                               : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                           }`}
                         >
-                          <div className="text-xs font-bold">{algo.label}</div>
+                          <div className="text-xs font-bold flex items-center justify-between">
+                            <span>{algo.label}</span>
+                            {selectedAlgo === algo.id && (
+                              <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 animate-ping" />
+                            )}
+                          </div>
                           <div className="text-[10px] text-slate-500">{algo.desc}</div>
                         </button>
                       ))}
@@ -636,9 +662,9 @@ export const PathForgeView: React.FC<PathForgeViewProps> = ({
                 <main className="flex-1 flex flex-col overflow-hidden bg-slate-50/50">
                   {/* Action Strip: Metrics & View Toggle */}
                   <div className="px-5 py-3 bg-white border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-3 shadow-2xs">
-                    <div className="flex items-center space-x-4">
+                    <div className="flex flex-wrap items-center gap-3">
                       {currentPlan && (
-                        <div className="flex items-center space-x-3 text-xs">
+                        <div className="flex flex-wrap items-center gap-3 text-xs">
                           <div className="flex items-center space-x-1.5">
                             <span className="text-slate-400">Total in Path:</span>
                             <span className="font-bold text-slate-900 font-mono">
@@ -666,6 +692,26 @@ export const PathForgeView: React.FC<PathForgeViewProps> = ({
                               {currentPlan.total_estimated_hours ?? 0} hrs
                             </span>
                           </div>
+
+                          {/* Dynamic Active Algorithm Badge */}
+                          {currentPlan.shortest_path_nodes && currentPlan.shortest_path_nodes.length > 0 ? (
+                            <>
+                              <span className="text-slate-300">•</span>
+                              <div className="flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 font-semibold text-[11px]">
+                                <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse" />
+                                <span>
+                                  {currentPlan.algorithm_used.toUpperCase()}: {currentPlan.shortest_path_edges} {currentPlan.shortest_path_edges === 1 ? 'hop' : 'hops'} ({currentPlan.shortest_path_nodes.length} nodes)
+                                </span>
+                              </div>
+                            </>
+                          ) : selectedStartId ? (
+                            <>
+                              <span className="text-slate-300">•</span>
+                              <div className="flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[11px]">
+                                <span>⚠️ Unreachable route from selected start</span>
+                              </div>
+                            </>
+                          ) : null}
                         </div>
                       )}
                     </div>
@@ -761,6 +807,7 @@ export const PathForgeView: React.FC<PathForgeViewProps> = ({
                         onMouseDown={handleMouseDown}
                         onMouseMove={handleMouseMove}
                         onMouseUp={handleMouseUp}
+                        onClick={() => setSelectedNodeId(null)}
                       >
                         <defs>
                           <marker
@@ -866,8 +913,8 @@ export const PathForgeView: React.FC<PathForgeViewProps> = ({
                                     ? '#38bdf8'
                                     : '#334155'
                                 }
-                                strokeWidth={isShortestPathEdge ? '3' : isPrereqEdge ? '2' : '1.2'}
-                                strokeDasharray={isShortestPathEdge ? 'none' : 'none'}
+                                strokeWidth={isShortestPathEdge ? '3.5' : isPrereqEdge ? '2' : '1.2'}
+                                strokeDasharray={isShortestPathEdge ? '6 3' : 'none'}
                                 markerEnd={
                                   isShortestPathEdge
                                     ? 'url(#arrowhead-active)'
@@ -892,9 +939,13 @@ export const PathForgeView: React.FC<PathForgeViewProps> = ({
                             if (!pos) return null;
 
                             const isGoal = topic.id === selectedGoalId;
+                            const isStart = topic.id === selectedStartId;
                             const isMastered = knownTopicIds.includes(topic.id);
                             const isInShortestPath =
                               currentPlan?.shortest_path_nodes?.includes(topic.id);
+                            const pathStepIndex = currentPlan?.shortest_path_nodes
+                              ? currentPlan.shortest_path_nodes.indexOf(topic.id)
+                              : -1;
                             const isRemainingPrereq =
                               currentPlan?.remaining_prerequisites?.includes(topic.id);
                             const isSelected = selectedNodeId === topic.id;
@@ -906,6 +957,10 @@ export const PathForgeView: React.FC<PathForgeViewProps> = ({
                             if (isGoal) {
                               nodeFill = '#7e22ce';
                               nodeStroke = '#c084fc';
+                              strokeWidth = '3';
+                            } else if (isStart) {
+                              nodeFill = '#312e81';
+                              nodeStroke = '#818cf8';
                               strokeWidth = '3';
                             } else if (isMastered) {
                               nodeFill = '#065f46';
@@ -942,6 +997,17 @@ export const PathForgeView: React.FC<PathForgeViewProps> = ({
                                   />
                                 )}
 
+                                {isStart && (
+                                  <circle
+                                    r="32"
+                                    fill="none"
+                                    stroke="#818cf8"
+                                    strokeWidth="2"
+                                    strokeDasharray="4 2"
+                                    opacity="0.8"
+                                  />
+                                )}
+
                                 <circle
                                   r="26"
                                   fill={nodeFill}
@@ -949,6 +1015,23 @@ export const PathForgeView: React.FC<PathForgeViewProps> = ({
                                   strokeWidth={isSelected ? '4' : strokeWidth}
                                   className="transition-all duration-200 group-hover:scale-110"
                                 />
+
+                                {/* Step badge if in shortest path */}
+                                {isInShortestPath && pathStepIndex >= 0 && (
+                                  <g transform="translate(18, -18)">
+                                    <circle r="9" fill="#4f46e5" stroke="#ffffff" strokeWidth="1.5" />
+                                    <text
+                                      y="3"
+                                      fill="#ffffff"
+                                      fontSize="9"
+                                      textAnchor="middle"
+                                      fontWeight="bold"
+                                      className="pointer-events-none"
+                                    >
+                                      {pathStepIndex + 1}
+                                    </text>
+                                  </g>
+                                )}
 
                                 {/* Icon / Label inside node */}
                                 {isMastered ? (
@@ -995,16 +1078,24 @@ export const PathForgeView: React.FC<PathForgeViewProps> = ({
 
                       {/* Selected Node Inspector Flyout */}
                       {activeNodeDetails && (
-                        <div className="absolute bottom-4 right-4 z-10 w-80 bg-white/95 backdrop-blur-md p-4 rounded-2xl border border-slate-200 shadow-xl text-xs space-y-2.5">
+                        <div
+                          onClick={(e) => e.stopPropagation()}
+                          className="absolute bottom-4 right-4 z-20 w-84 bg-white/95 backdrop-blur-md p-4 rounded-2xl border border-slate-200/90 shadow-2xl text-xs space-y-3"
+                        >
                           <div className="flex items-center justify-between">
                             <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700">
                               Unit {activeNodeDetails.unit} • {activeNodeDetails.category || 'Topic'}
                             </span>
                             <button
-                              onClick={() => setSelectedNodeId(null)}
-                              className="text-slate-400 hover:text-slate-600"
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedNodeId(null);
+                              }}
+                              className="w-6 h-6 rounded-md flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                              aria-label="Close inspector"
                             >
-                              ✕
+                              <X className="w-4 h-4" />
                             </button>
                           </div>
                           <div>
@@ -1021,26 +1112,47 @@ export const PathForgeView: React.FC<PathForgeViewProps> = ({
                               {activeNodeDetails.estimated_hours || 2} study hours
                             </span>
                           </div>
-                          <div className="pt-2 flex items-center space-x-2">
+                          <div className="pt-2 flex flex-wrap items-center gap-2">
                             <button
-                              onClick={() => {
-                                setSelectedGoalId(activeNodeDetails.id);
-                                handleGeneratePath();
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const newGoalId = activeNodeDetails.id;
+                                setSelectedGoalId(newGoalId);
+                                handleGeneratePath(selectedAlgo, newGoalId, selectedStartId);
+                                setSelectedNodeId(null);
                               }}
-                              className="flex-1 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-[11px] text-center"
+                              className="flex-1 py-1.5 px-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-[11px] text-center transition-colors cursor-pointer"
                             >
                               Set as Goal
                             </button>
                             <button
-                              onClick={() => toggleKnownTopic(activeNodeDetails.id)}
-                              className={`flex-1 py-1.5 rounded-lg border font-medium text-[11px] text-center ${
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const newStartId = activeNodeDetails.id;
+                                setSelectedStartId(newStartId);
+                                handleGeneratePath(selectedAlgo, selectedGoalId, newStartId);
+                                setSelectedNodeId(null);
+                              }}
+                              className="flex-1 py-1.5 px-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-medium text-[11px] text-center transition-colors cursor-pointer"
+                            >
+                              Set as Start
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleKnownTopic(activeNodeDetails.id);
+                              }}
+                              className={`py-1.5 px-2.5 rounded-lg border font-medium text-[11px] text-center transition-colors cursor-pointer ${
                                 knownTopicIds.includes(activeNodeDetails.id)
                                   ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                                   : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                               }`}
                             >
                               {knownTopicIds.includes(activeNodeDetails.id)
-                                ? 'Mark Unlearned'
+                                ? 'Mastered ✓'
                                 : 'Mark Mastered'}
                             </button>
                           </div>

@@ -21,12 +21,14 @@ class DFSResult:
         has_cycle: bool,
         cycle: Optional[List[str]],
         duration_ms: float,
+        edge_count: Optional[int] = None,
     ):
         self.algorithm = "dfs"
         self.start_node = start_node
         self.target_node = target_node
         self.reachable = reachable
         self.path = path
+        self.edge_count = edge_count if edge_count is not None else max(0, len(path) - 1)
         self.visited_nodes = visited_nodes
         self.explored_count = explored_count
         self.has_cycle = has_cycle
@@ -40,6 +42,7 @@ class DFSResult:
             "target_node": self.target_node,
             "reachable": self.reachable,
             "path": self.path,
+            "edge_count": self.edge_count,
             "visited_nodes": self.visited_nodes,
             "explored_count": self.explored_count,
             "has_cycle": self.has_cycle,
